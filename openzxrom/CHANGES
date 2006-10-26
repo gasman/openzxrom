@@ -1,0 +1,40 @@
+OpenZXRom 2006-06-18
+- Basic interpreter core ('interp')
+- Numeric expression parsing ('get_num_expr'); can process nearly all syntax
+  (with the sole exception of string comparisons), although only literal
+  numerics can actually be evaluated at the moment
+- Rudimentary calculator stack operations ('calc_pop_aedcb' @ 0x2bf1,
+  'calc_pop_a' @ 0x2dd5)
+- INK and PAPER commands implemented ('cmd_ink' / 'cmd_paper')
+- BORDER command implemented ('cmd_border')
+- NEW command implemented ('cmd_new')
+- CLS command implemented ('cmd_cls')
+- REM command implemented ('cmd_rem')
+- GO TO command implemented ('cmd_goto')
+- RUN command implemented ('cmd_run')
+- STOP command implemented ('cmd_stop')
+- RANDOMIZE command implemented ('cmd_randomize')
+- CLEAR command implemented ('cmd_clear')
+- Auto-running programs on LOAD
+- Error reporting framework ('error' @ 0x0008)
+- System variables vars_addr, calc_stack_end (was spare_mem_addr) moved to
+  correct ZX ROM compatible locations
+
+OpenZXRom 2006-06-03
+- Tape loading (0x0556)
+- Slightly redesigned splash screen, and moved to separate file for easier
+  version number bumping
+
+OpenZXRom 2006-05-17
+- Key scanning routine (0x028e)
+- IM1 interrupt service routine updates FRAMES system variable
+- Print-string routine now ZX ROM compatible (0x203c)
+- Character printing now respects setting of font system variable
+- Character printing preserves registers
+- perm_attribute and temp_attribute system variables moved to match ZX ROM
+- New entry point for clear_screen (0x0daf)
+
+OpenZXRom 2006-04-10
+- Initial release
+- Character printing, splash screen, screen clearing, font
+- Not much else...

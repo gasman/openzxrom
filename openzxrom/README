@@ -1,0 +1,96 @@
+                                   OpenZXrom
+                                   =========
+
+        "No disrespect to Mr. Altwasser but it is the ROM, not the
+        hardware, that make the Spectrum great. It's an incomplete work
+        of genius."
+                - Geoff Wearmouth, comp.sys.sinclair
+                <8te+ZzDmVI1DFw7K@wearmouth.demon.co.uk>
+
+OpenZXrom is a ROM image for the Sinclair ZX Spectrum computer, created with the
+aim of being as compatible as possible with Sinclair's original 16/48K ROM while
+containing none of the original copyrighted code. It is released under the GNU
+General Public License.
+
+* Why?
+
+Amstrad, the current copyright holders of the Spectrum ROMs, have informally
+given permission for the ROMs to be distributed for emulation purposes subject
+to certain conditions, such as not charging a fee for distributing them. This
+grant of permission has been welcomed by the Spectrum community, and has allowed
+Spectrum emulation projects to flourish without legal shadows hanging over them.
+However, Amstrad's permission stops short of being a full Open Source licence,
+which has impacted on two areas of development in particular:-
+
+1) Hardware re-implementations of the Spectrum are explicitly excluded from
+   Amstrad's statement of permission;
+2) Software collections such as the Debian project, which adhere to a strict
+   Open Source only policy, are currently unable to include Spectrum emulators,
+   as the ROM image is an integral part of any emulator.
+
+For these reasons, and perhaps others yet to be identified, there is a clear
+demand for a freely licenced ROM image that can serve in some capacity as a
+substitute for the original Sinclair ROM.
+
+* How compatible can we get?
+
+At present we do not propose to create a 100% work-alike of the original ROM
+complete with Basic programming environment. 100% compatibility will never be
+attainable anyway; the pathological case would be a program which performs a
+byte checksum of the ROM. Instead, we will initially focus on the most common
+entry points used by machine-code programs for tasks such as text printing and
+keyboard scanning. Amongst games in particular, it is reasonable to expect
+something like a 90:10 rule - 90% of games will work with only 10% of the ROM's
+feature set implemented. By way of an example, OpenZXRom is already able to run
+Manic Miner simply by virtue of providing a font.
+
+An extra complication comes when we want to load games from tape, as this will
+entail incorporating a limited Basic interpreter to run the bootstrap loader.
+Initially this might only support a small subset of commands, such as CLEAR,
+LOAD and USR.
+
+Of course, the real Sinclair ROMs will continue to be readily downloadable under
+Amstrad's not-free-but-usually-good-enough licence for the forseeable future, so
+this will always be an option for troublesome programs, even for people who
+receive their emulator without those ROMs bundled.
+
+* Is this a clean-room implementation?
+
+Not really. I (and doubtless anyone else likely to be working on this project)
+have seen the Spectrum ROM disassembly, and will refer to it where appropriate
+to decide what the correct behaviour is at particular points; so in the unlikely
+event that it does turn out to have large chunks of code in common with the
+Spectrum ROM, Amstrad will have a good case for claiming copyright infringement.
+(And that's the point where we start thinking about a proper clean-room approach
+for the offending code...) Developers should at least adopt a policy of not
+consulting the disassembly simply to find out the best way to code a particular
+routine.
+
+In practice, the differing design goals and priorities between this ROM and
+Sinclair's will tend towards producing different code; for example, in our
+version of the print routines, we have no need to implement such details as
+stream redirection (at least, not yet).
+
+* How do I use it?
+
+This will vary from one emulator to another. In Fuse, you can go to Options ->
+Select ROMs -> Spectrum 48K and select the file, or start it with the command
+line:
+
+fuse --rom-48 openzxrom.bin --machine 48
+
+However, this is probably a case of "if you're the sort of person to be
+interested in this project in the first place, you probably know how to do it
+already". Once this project properly gets off the ground and is supplied as the
+default ROM image for an emulator package, you're more likely to be asking how
+to switch away from it instead :-)
+
+* Build instructions
+
+'make'.
+You'll need Pasmo <http://www.arrakis.es/~ninsesabe/pasmo/> to assemble it -
+tested with version 0.5.2, but earlier versions may work.
+
+
+Matthew Westcott <matthew@west.co.tt>
+http://matt.west.co.tt/spectrum/openzxrom/

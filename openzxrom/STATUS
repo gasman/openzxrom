@@ -1,0 +1,84 @@
+Project status: OpenZXRom 2006-06-18
+
+User entry points
+-----------------
+These are addresses which it is anticipated that user programs will attempt to
+call; we therefore attempt to match the documented behaviour of the equivalent
+routines in the ZX ROM.
+
+0x0000: Startup
+
+0x0008: Error display
+	Only a limited number of error messages are available.
+
+0x0010: Print a character
+	Character classes supported: Newline (0x0d), INK/PAPER controls (except
+	pseudo-colours 8 and 9), AT and TAB controls, standard characters (0x20-0x7f;
+	includes customised fonts).
+	Not supported: Comma control, cursor / backspace controls, FLASH / BRIGHT
+	controls, INVERSE / OVER controls, block graphics, user-defined graphics,
+	keyword tokens.
+	Does not handle scrolling upon reaching the bottom of the screen.
+
+0x0038: IM1 interrupt service routine
+	Updates FRAMES system variable; no keyboard scanning.
+
+0x028e: Keyboard scanning
+
+0x0556: Load bytes from tape
+	LOAD only, no VERIFY. Other addresses synchronised with ZX ROM behaviour are
+	0x0565 (entry point as trapped by FUSE for tape flash-loading) and 0x05e2
+	(return address from FUSE flash-loading).
+	
+0x0d6b: Clear screen
+	0x0daf is another valid entry point.
+	
+0x203c: Print a string
+
+0x2bf1: POP value from calculator stack into AEDCB
+
+0x2da2: POP value from calculator stack into BC
+	Only supports integer form; does not handle conversion of floating point
+	values.
+
+0x2dd5: POP value from calculator stack into A
+	Only supports integer form; does not handle conversion of floating point
+	values.
+
+BASIC commands supported
+------------------------
+	INK (except INK 8 / 9)
+	PAPER (except PAPER 8 / 9)
+	STOP
+	NEW
+	BORDER
+	REM
+	GO TO
+	RUN
+	RANDOMIZE
+	CLS
+	CLEAR
+BASIC commands not supported:
+	DEF FN, CAT, FORMAT, MOVE, ERASE, OPEN #, CLOSE #, MERGE, VERIFY, BEEP, CIRCLE,
+	FLASH, BRIGHT, INVERSE, OVER, OUT, LPRINT, LLIST, READ, DATA, RESTORE,
+	CONTINUE, DIM, FOR, GO SUB, INPUT, LOAD, LIST, LET, PAUSE, NEXT, POKE, PRINT,
+	PLOT, SAVE, IF, DRAW, RETURN, COPY
+	
+Numeric expression support
+--------------------------
+	Numeric literals - supported (but only integers may be evaluated for use in
+		commands)
+	Bracketed expressions - supported
+	Variables - not supported
+	Array subscripts - not supported
+	Operators:
+		Boolean (OR , AND , NOT) - parsed but not evaluated
+		Numeric comparison ( = , < , > , <> , <= , >= ) - parsed but not evaluated
+		String comparison ( = , < , > , <> , <= , >= ) - not parsed
+		Arithmetic ( + , - , * , / , ^ ) - unary '+' trivially skipped over, others
+			parsed but not evaluated
+		Functions - parsed but not evaluated (arguments not parsed)
+	
+String expression support
+-------------------------
+	None.
