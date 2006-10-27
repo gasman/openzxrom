@@ -1,3 +1,7 @@
+OpenZXRom 200x-xx-xx
+- Changed system font to Clairsys
+  <http://www.type-invaders.com/zxspectrum/index.html> by Paul van der Laan
+
 OpenZXRom 2006-06-18
 - Basic interpreter core ('interp')
 - Numeric expression parsing ('get_num_expr'); can process nearly all syntax

@@ -1350,7 +1350,7 @@ loading_text_end
 ; ---------------			
 			fillto 0x3d00
 font
-			include "font.asm"
+			incbin "clairsys.bin"
 			
 screen		equ 0x4000
 attributes	equ 0x5800
