@@ -162,7 +162,6 @@ search_basic_header
 			ld d,(ix+0x10)
 			add hl,de
 			ld (vars_addr),hl				; store position of variables table
-			; TODO: do something with autostart LINE number
 			pop hl							; recall prog_mem
 			push hl
 			ld e,(ix+0x0b)					; get full data length
@@ -1304,10 +1303,6 @@ calc_pop_bc_int_neg
 			inc a					; A was 0xff; set zero flag without setting carry
 			ret
 
-calc_pop_bc_fp
-			; TODO: handle floating point values (eek!)
-			rst fatal_error
-
 			fillto 0x2dd5
 calc_pop_a
 ; POP a value from the top of the calculator stack into A
@@ -1338,6 +1333,41 @@ calc_pop_a_int_neg
 calc_pop_a_fp
 			; TODO: handle floating point values (eek!)
 			rst fatal_error
+
+calc_pop_bc_fp
+			add a,0x6f  ; cause a carry if exp > 0x90
+			ret c ; return with carry set if overflow
+			; TODO: maybe short-circuit the loop and return 0 if exponent is much too small
+			sla c
+			rl d
+			rl e
+			; sign flag will now be in carry - remember it for later
+			push af
+			
+			; now shift right and increment a until a becomes 0
+			scf	; first shift right needs to reinstate the high 1 bit
+calc_pop_bc_fp_loop
+			rr e
+			rr d
+			inc a
+			jr z,calc_pop_bc_fp_exit
+			or a  ; reset carry flag so that next shifts right will fill with zeros
+			jp calc_pop_bc_fp_loop
+  
+calc_pop_bc_fp_exit
+			adc a,d ; carry will still be in place from shifting d right;
+				; use this to round up while copying result into bc
+			ld c,a
+			ld a,0
+			adc a,e
+			ld b,a
+			pop af
+				; carry flag will be set iff number was negative;
+				; we want to set the zero flag in this case
+			ccf	; now carry flag reset iff number is negative
+			ld a,0
+			adc a,0	; reset carry; set zero flag if carry flag was reset
+			ret
 			
 ; ---------------
 splash_text
