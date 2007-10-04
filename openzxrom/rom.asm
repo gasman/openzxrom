@@ -25,7 +25,7 @@
 
 ; macro to mark addresses up to (and not including) addr as unused memory
 fillto		macro addr
-			ds addr - $, 0xEF				; 0xEF = RST 0x0028
+			ds addr - $, 0xF7				; 0xF7 = RST 0x0030
 			endm
 			
 ; ---------------
@@ -61,16 +61,11 @@ consume		ld hl,interp_ptr
 			inc (hl)
 			jp skip_whitespace
 
-			fillto 0x0028
+			fillto 0x0030
 ; Arrive here if we execute any undefined area of the ROM
 fatal_error
 			di
-fatal_error_lp
-			ld a,6
-			out (254),a
-			ld a,3
-			out (254),a
-			jr fatal_error_lp
+			jp fatal_error_main
 			
 			fillto 0x0038
 ; RST 0x0038: IM 1 interrupt service routine
@@ -87,6 +82,14 @@ done_frames
 			pop hl
 			ei
 			ret
+
+fatal_error_main
+fatal_error_lp
+			ld a,6
+			out (254),a
+			ld a,3
+			out (254),a
+			jr fatal_error_lp
 
 ; ---------------
 cmd_new
