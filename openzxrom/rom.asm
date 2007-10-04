@@ -1331,8 +1331,18 @@ calc_pop_a_int_neg
 			ret
 			
 calc_pop_a_fp
-			; TODO: handle floating point values (eek!)
-			rst fatal_error
+			call calc_pop_bc_fp	; just use calc_pop_bc and take low byte of return value
+			ld a,c
+				; ... but need to return carry set if we overflow that byte (i.e. b is not 0)
+			push af	; store flags before testing b
+			xor a
+			cp b	; will trigger a carry if b is not 0
+			jr c,calc_pop_a_fp_overflow
+			pop af	; recall return value and flags
+			ret
+calc_pop_a_fp_overflow
+			pop bc	; remove stored af from stack
+			ret		; return with carry still set
 
 calc_pop_bc_fp
 			add a,0x6f  ; cause a carry if exp > 0x90
