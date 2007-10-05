@@ -60,6 +60,11 @@ nextchar	ld hl,(interp_ptr)
 consume		ld hl,interp_ptr
 			inc (hl)
 			jp skip_whitespace
+			
+			fillto 0x0028
+; RST 0x0028: enter calculator mode
+calc			pop hl
+			jp calc_main
 
 			fillto 0x0030
 ; Arrive here if we execute any undefined area of the ROM
@@ -1061,6 +1066,7 @@ get_num_expr_8
 			ld e,(hl)
 			inc hl
 			ld d,(hl)
+			rst consume			; advance past function token
 			push de
 			ret
 
@@ -1118,20 +1124,42 @@ num_func_table
 			dw fatal_error			; COS
 			dw fatal_error			; TAN
 			dw fatal_error			; ASN
+			dw fatal_error			; ACS
+			dw fatal_error			; ATN
 			dw fatal_error			; LN
 			dw fatal_error			; EXP
 			dw fatal_error			; INT
 			dw fatal_error			; SQR
 			dw fatal_error			; SGN
 			dw fatal_error			; ABS
-			dw fatal_error			; PEEK
-			dw fatal_error			; IN
+			dw func_peek				; PEEK
+			dw func_in					; IN
 			dw fatal_error			; USR
 			dw fatal_error			; STR$
 			dw fatal_error			; CHR$
 			dw fatal_error			; NOT
 			dw get_num_literal		; BIN (not really a function -
 										; signifies that a literal is coming)
+
+; ---------------
+func_peek
+; PEEK function
+; TODO: size-optimise by combining all functions that just call a single calculator op corresponding
+; to their index number
+			call get_num_expr_8	; fetch numeric operand 
+			jp c,fatal_error	; die if no valid numeric expression was found
+			rst calc					; perform PEEK operation
+			db cc_peek
+			db cc_endcalc
+			ret
+func_in
+; IN function
+			call get_num_expr_8	; as for func_peek
+			jp c,fatal_error
+			rst calc
+			db cc_in
+			db cc_endcalc
+			ret
 
 ; ---------------
 cmd_rem
@@ -1262,6 +1290,25 @@ print_string
 			inc de
 			rst 0x0010
 			jr print_string
+
+; ---------------
+			fillto 0x2ab6
+calc_push_aedcb
+; PUSH the contents of AEDCB onto the calculator stack
+			; TODO: check for out-of-memory condition
+			ld hl,(calc_stack_end)
+			ld (hl),a
+			inc hl
+			ld (hl),e
+			inc hl
+			ld (hl),d
+			inc hl
+			ld (hl),c
+			inc hl
+			ld (hl),b
+			inc hl
+			ld (calc_stack_end),hl
+			ret
 			
 ; ---------------
 			fillto 0x2bf1
@@ -1281,6 +1328,20 @@ calc_pop_aedcb
 			ld (calc_stack_end),hl
 			ret
 
+			fillto 0x2d28
+calc_push_a
+; PUSH the A register onto the calculator stack
+			ld c,a	; move contents of A into BC and continue into calc_push_bc
+			ld b,0
+calc_push_bc
+; PUSH the BC register pair onto the calculator stack
+			xor a		; move contents of BC into DC portion of AEDCB, and continue into calc_push_aedcb
+			ld e,a
+			ld d,c
+			ld c,b
+			ld b,a
+			jp calc_push_aedcb
+			
 			fillto 0x2da2
 calc_pop_bc
 ; POP a value from the top of the calculator stack into BC
@@ -1381,6 +1442,113 @@ calc_pop_bc_fp_exit
 			ld a,0
 			adc a,0	; reset carry; set zero flag if carry flag was reset
 			ret
+
+; ---------------
+calc_resume
+			pop hl	; calculator ops return here to read next instruction
+calc_main
+; Calculator mode; enter with HL pointing to the sequence of calculator instructions. Continue executing
+; until we encounter byte 0x38, at which we return control to the code following the instruction stream.
+			ld a,(hl)
+			inc hl
+			cp 0x38
+			jr z,calc_op_end_calc
+			jp nc,fatal_error	; we don't handle anything above 0x38 for now
+				; TODO: handle calc opcodes >0x38
+			push hl
+			ld l,a		; translate instruction code into address in jump table
+			ld h,0
+			add hl,hl
+			ld de,calc_op_table
+			add hl,de
+			ld e,(hl)
+			inc hl
+			ld d,(hl)
+			ld hl,calc_resume	; return address after performing operation
+			push hl
+			push de						; jump to looked-up address
+			ret
+calc_op_end_calc
+			jp (hl)						; return to next address after instruction stream
+			
+; jump table for calculator opcodes
+; jumps to fatal_error where opcode is unimplemented / undefined
+calc_op_table
+			dw fatal_error
+			dw fatal_error	; 01 = exchange
+			dw fatal_error	; 02 = delete
+			dw fatal_error	; 03 = subtract
+			dw fatal_error	; 04 = multiply
+			dw fatal_error	; 05 = divide
+			dw fatal_error	; 06 = power
+			dw fatal_error	;
+			dw fatal_error	;
+			dw fatal_error	;
+			dw fatal_error	;
+			dw fatal_error	;
+			dw fatal_error	;
+			dw fatal_error	;
+			dw fatal_error	;
+			dw fatal_error	; 0f = add
+			dw fatal_error	;
+			dw fatal_error	;
+			dw fatal_error	;
+			dw fatal_error	;
+			dw fatal_error	;
+			dw fatal_error	;
+			dw fatal_error	;
+			dw fatal_error	; 17 = s_add
+			dw fatal_error	; 18 = val$
+			dw fatal_error	; 19 = usr_s
+			dw fatal_error	; 
+			dw fatal_error	; 1b = negate
+			dw fatal_error	; 1c = code
+			dw fatal_error	; 1d = val
+			dw fatal_error	; 1e = len
+			dw fatal_error	; 1f = sin
+			dw fatal_error	; 20 = cos
+			dw fatal_error	; 21 = tan
+			dw fatal_error	; 22 = asn
+			dw fatal_error	; 23 = acs
+			dw fatal_error	; 24 = atn
+			dw fatal_error	; 25 = ln
+			dw fatal_error	; 26 = exp
+			dw fatal_error	; 27 = int
+			dw fatal_error	; 28 = sqr
+			dw fatal_error	; 29 = sgn
+			dw fatal_error	; 2a = abs
+cc_peek		equ 0x2b
+			dw calcop_peek	; 2b = peek
+cc_in			equ 0x2c
+			dw calcop_in		; 2c = in
+			dw fatal_error	; 2d = usr_n
+			dw fatal_error	; 2e = str$
+			dw fatal_error	; 2f = chr$
+			dw fatal_error	;
+			dw fatal_error	; 31 = duplicate
+			dw fatal_error	;
+			dw fatal_error	;
+			dw fatal_error	;
+			dw fatal_error	;
+			dw fatal_error	;
+			dw fatal_error	;
+cc_endcalc	equ 0x38
+
+; ---------------			
+calcop_peek
+; PEEK calculator operation
+			call calc_pop_bc						; recall address
+			jp c,err_out_of_range				; must be positive and within 16 bits
+			jp z,err_out_of_range
+			ld a,(bc)										; get address contents
+			jp calc_push_a							; store the result and return
+calcop_in
+; IN calculator operation
+			call calc_pop_bc						; recall address
+			jp c,err_out_of_range				; must be positive and within 16 bits
+			jp z,err_out_of_range
+			in a,(c)										; get port input value
+			jp calc_push_a							; store the result and return
 			
 ; ---------------
 splash_text
