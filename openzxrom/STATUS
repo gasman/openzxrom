@@ -77,8 +77,7 @@ BASIC commands not supported:
 	
 Numeric expression support
 --------------------------
-	Numeric literals - supported (but only integers may be evaluated for use in
-		commands)
+	Numeric literals - supported
 	Bracketed expressions - supported
 	Variables - not supported
 	Array subscripts - not supported
