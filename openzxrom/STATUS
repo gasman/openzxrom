@@ -47,12 +47,8 @@ routines in the ZX ROM.
 0x2d2b: PUSH contents of BC to calculator stack
 
 0x2da2: POP value from calculator stack into BC
-	Only supports integer form; does not handle conversion of floating point
-	values.
 
 0x2dd5: POP value from calculator stack into A
-	Only supports integer form; does not handle conversion of floating point
-	values.
 
 BASIC commands supported
 ------------------------
