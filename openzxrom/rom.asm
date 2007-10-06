@@ -546,7 +546,7 @@ command_table
 			dw fatal_error	; BRIGHT
 			dw fatal_error	; INVERSE
 			dw fatal_error	; OVER
-			dw fatal_error	; OUT
+			dw cmd_out		; OUT
 			dw fatal_error	; LPRINT
 			dw fatal_error	; LLIST
 			dw cmd_stop		; STOP
@@ -1312,6 +1312,19 @@ cmd_poke
 			call consume_a						; fetch byte argument
 			pop hl
 			ld (hl),a									; perform the poke
+			ret
+; ---------------
+cmd_out
+; process OUT command
+			call consume_bc						; fetch address into bc
+			push bc
+			rst nextchar							; confirm that next char is a comma
+			cp ','
+			jp nz,fatal_error
+			rst consume								; consume the comma
+			call consume_a						; fetch byte argument
+			pop bc
+			out (c),a									; perform the output
 			ret
 			
 ; ---------------
