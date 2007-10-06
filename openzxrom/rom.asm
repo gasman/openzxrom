@@ -199,11 +199,8 @@ report_loading_error
 cmd_goto
 ; handle GO TO command
 			pop hl							; Discard the return address (overridden here)
-			call get_num_expr				; Get the line number
-			jp c,fatal_error				; Fail if no line number found
-			call calc_pop_bc
-			jp c,err_out_of_range			; require number to be positive and within
-			jp z,err_out_of_range			; 16-bit range
+			call consume_bc			; fetch the line number into bc, ensuring that
+													; it's present, positive and <=0xffff
 				; (actually the original ROM gives "B Integer out of range, 0:1" for >=61440,
 				; and "N Statement lost, 0:255" for >=32768. How terribly random)
 goto_bc
@@ -570,7 +567,7 @@ command_table
 			dw fatal_error	; LET
 			dw fatal_error	; PAUSE
 			dw fatal_error	; NEXT
-			dw fatal_error	; POKE
+			dw cmd_poke		; POKE
 			dw fatal_error	; PRINT
 			dw fatal_error	; PLOT
 			dw cmd_run		; RUN
@@ -592,6 +589,37 @@ is_eos
 			ret z
 			cp ':'
 			ret
+; ---------------
+consume_bc
+; consume a numeric expression from interp_ptr and return it in bc,
+; triggering the appropriate error if expression is missing/invalid
+; or result is negative or >0xffff
+			call get_num_expr
+			jp c,fatal_error					; die if expression is missing entirely
+calc_pop_bc_validate
+; pop value from calculator stack into bc,
+; triggering the appropriate error if expression is missing/invalid
+; or result is negative or >0xffff
+			call calc_pop_bc
+			jp c,err_out_of_range				; must be within 16 bits
+			jp z,err_out_of_range				; must be positive
+			ret
+
+consume_a
+; consume a numeric expression from interp_ptr and return it in a,
+; triggering the appropriate error if expression is missing/invalid
+; or magnitude is >255. (Note: we allow negative values here, although
+; calling functions invariably ignore the sign bit...)
+			call get_num_expr
+			jp c,fatal_error				; die if expression is missing entirely
+calc_pop_a_validate
+; pop value from calculator stack into a,
+; triggering appropriate error if expression is missing/invalid
+; or magnitude is >255
+			call calc_pop_a
+			jp c,err_out_of_range
+			ret
+			
 ; ---------------
 			fillto 0x0556
 load_bytes
@@ -1076,6 +1104,7 @@ get_num_bracketed
 			rst nextchar			; Next char must be ')', or else
 			cp ')'					; it will make baby Jesus cry
 			jp nz,fatal_error
+			rst consume			; consume right bracket
 			or a
 			ret
 			
@@ -1100,7 +1129,9 @@ get_num_find_0e
 				; TODO: check for out-of-memory condition
 			ldir
 			ld (calc_stack_end),de
+			dec hl				; move back to final byte read, as 'consume' always advances by at least one byte
 			ld (interp_ptr),hl
+			rst consume		; move to next character, skipping any whitespace
 			or a					; signal success
 			ret
 
@@ -1178,12 +1209,9 @@ cmd_border
 get_colour_arg
 ; fetch a numeric argument and ensure that it's a valid colour; return it in A
 ; TODO: handle pseudo-colours 8 and 9 (but not for BORDER)
-			call get_num_expr		; evaluate argument
-			jp c,fatal_error		; return syntax error if it's not there
-			call calc_pop_a			; fetch it into A
-			jr z,err_out_of_range	; output 'out of range' error if it's negative
-			jr c,err_out_of_range	; or overflows the byte, or is >= 8
-			cp 8
+			call consume_a			; fetch colour argument into a
+			jr z,err_out_of_range	; explicitly forbid negative values, because consume_a doesn't
+			cp 8								; ensure it's <8
 			jr nc,err_out_of_range
 			ret
 err_out_of_range
@@ -1222,9 +1250,7 @@ cmd_clear
 			call vanilla_clear					; do stock CLEAR actions (clear screen and vars)
 			call get_num_expr					; look for a numeric argument
 			ret c								; return if there isn't one
-			call calc_pop_bc
-			jp c,err_out_of_range				; must be positive and within 16 bits
-			jp z,err_out_of_range
+			call calc_pop_bc_validate		; pop argument into bc, ensuring that it's positive and within 16 bits
 			ld hl,(calc_stack_end)				; check that it's somewhere in spare memory
 				; TODO: consider making the limit slightly above calc_stack_end, for some
 				; breathing room (could do INC H here, but 256 bytes breathing room
@@ -1253,10 +1279,8 @@ cmd_run
 			call vanilla_clear					; do stock CLEAR actions
 			call get_num_expr
 			jr c,run_no_arg						; if none found, go to line 0
-			call calc_pop_bc					; if found, check it's positive and
-			jp c,err_out_of_range				; fits in 16 bits
-			jp z,err_out_of_range
-			jp goto_bc
+			call calc_pop_bc_validate	; if found, retrieve it into bc, ensuring it's
+			jp goto_bc								; within 0<=bc<=0xffff
 run_no_arg
 			ld bc,0
 			jp goto_bc
@@ -1266,9 +1290,7 @@ cmd_randomize
 ; process RANDOMIZE command
 			call get_num_expr					; look for numeric argument
 			jr c,randomize_frames				; if none supplied, use FRAMES
-			call calc_pop_bc					; if one supplied, check it's positive and
-			jp c,err_out_of_range				; within 16 bits
-			jp z,err_out_of_range
+			call calc_pop_bc_validate		; if one supplied, check it's within 0<=bc<=0xffff
 			ld a,b								; check if it's 0
 			or c
 			jr nz,randomize_bc					; if not, use that as our seed
@@ -1276,6 +1298,20 @@ randomize_frames
 			ld bc,(frames)
 randomize_bc
 			ld (rand_seed),bc
+			ret
+			
+; ---------------
+cmd_poke
+; process POKE command
+			call consume_bc						; fetch address into bc
+			push bc
+			rst nextchar							; confirm that next char is a comma
+			cp ','
+			jp nz,fatal_error
+			rst consume								; consume the comma
+			call consume_a						; fetch byte argument
+			pop hl
+			ld (hl),a									; perform the poke
 			ret
 			
 ; ---------------
@@ -1537,16 +1573,12 @@ cc_endcalc	equ 0x38
 ; ---------------			
 calcop_peek
 ; PEEK calculator operation
-			call calc_pop_bc						; recall address
-			jp c,err_out_of_range				; must be positive and within 16 bits
-			jp z,err_out_of_range
+			call calc_pop_bc_validate		; recall address and ensure it's in 0-ffff
 			ld a,(bc)										; get address contents
 			jp calc_push_a							; store the result and return
 calcop_in
 ; IN calculator operation
-			call calc_pop_bc						; recall address
-			jp c,err_out_of_range				; must be positive and within 16 bits
-			jp z,err_out_of_range
+			call calc_pop_bc_validate		; recall address and ensure it's in 0-ffff
 			in a,(c)										; get port input value
 			jp calc_push_a							; store the result and return
 			
