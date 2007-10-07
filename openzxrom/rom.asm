@@ -1304,7 +1304,7 @@ num_func_table
 			dw fatal_error			; ABS
 			dw func_peek				; PEEK
 			dw func_in					; IN
-			dw fatal_error			; USR
+			dw func_usr					; USR
 			dw fatal_error			; STR$
 			dw fatal_error			; CHR$
 			dw fatal_error			; NOT
@@ -1330,7 +1330,22 @@ func_in
 			db cc_endcalc
 			xor a								; signal successful fetch of numeric expression (carry reset, zero set)
 			ret
-
+func_usr
+; USR function
+			call get_expr_8		; retrieve expression, which may be string or numeric
+			jp c,fatal_error	; die if expression is missing
+			jr nz,func_usr_str	; jump to func_usr_str if expression is a string
+			rst calc
+			db cc_usr_n
+			db cc_endcalc
+			xor a							; indicate numeric result (carry reset, zero set)
+			ret
+func_usr_str
+			rst calc
+			db cc_usr_s
+			db cc_endcalc
+			xor a							; indicate numeric result (carry reset, zero set)
+			ret
 ; ---------------
 cmd_rem
 ; process REM command
@@ -1706,6 +1721,7 @@ calc_op_table
 			dw fatal_error	;
 			dw fatal_error	; 17 = s_add
 			dw fatal_error	; 18 = val$
+cc_usr_s	equ 0x19
 			dw fatal_error	; 19 = usr_s
 			dw fatal_error	; 
 			dw fatal_error	; 1b = negate
@@ -1728,7 +1744,8 @@ cc_peek		equ 0x2b
 			dw calcop_peek	; 2b = peek
 cc_in			equ 0x2c
 			dw calcop_in		; 2c = in
-			dw fatal_error	; 2d = usr_n
+cc_usr_n	equ 0x2d
+			dw calcop_usr_n	; 2d = usr_n
 			dw fatal_error	; 2e = str$
 			dw fatal_error	; 2f = chr$
 			dw fatal_error	;
@@ -1752,6 +1769,15 @@ calcop_in
 			call calc_pop_bc_validate		; recall address and ensure it's in 0-ffff
 			in a,(c)										; get port input value
 			jp calc_push_a							; store the result and return
+calcop_usr_n
+; USR <numeric> calculator operation
+			ld hl,calc_push_bc					; place calc_push_bc on the stack as the return address
+																	; from the user routine, so that bc will be pushed on the
+																	; calc stack before returning to the expression evaluator
+			push hl
+			call calc_pop_bc_validate		; recall address and ensure it's in 0-ffff
+			push bc
+			ret													; jump to address bc
 			
 ; ---------------
 splash_text
