@@ -99,8 +99,7 @@ fatal_error_lp
 ; ---------------
 cmd_new
 ; handle NEW command
-			call nextchar_is_eos			; check syntax first; ensure next char is
-			jp nz,fatal_error				; end-of-statement
+			call assert_eos			; assert that an end-of-statement follows the NEW token; die if not
 			jr warm_start					; if OK, perform a warm start
 			
 cold_start
@@ -199,8 +198,10 @@ report_loading_error
 cmd_goto
 ; handle GO TO command
 			pop hl							; Discard the return address (overridden here)
-			call consume_bc			; fetch the line number into bc, ensuring that
-													; it's present, positive and <=0xffff
+			call get_num_expr		; read line number
+			call assert_eos			; ensure that the end of statement follows
+			call calc_pop_bc_validate		; fetch the line number into bc, ensuring that
+													; it's positive and <=0xffff
 				; (actually the original ROM gives "B Integer out of range, 0:1" for >=61440,
 				; and "N Statement lost, 0:255" for >=32768. How terribly random)
 goto_bc
@@ -516,8 +517,7 @@ interp
 
 cmd_stop
 ; handle STOP statement									
-			call nextchar_is_eos			; check syntax first; ensure next char is
-			jp nz,fatal_error				; end-of-statement
+			call assert_eos			; assert that an end-of-statement follows the STOP token; die if not
 interp_finished
 			rst 0x0008						; report "program finished"
 			db 0xff
@@ -581,6 +581,12 @@ command_table
 			dw fatal_error	; COPY
 			
 ; ---------------
+assert_eos
+; assert that the next character at interp_ptr is an end-of-statement character; die if not
+			call nextchar_is_eos
+			ret z
+			jp nz,fatal_error
+
 nextchar_is_eos
 			rst nextchar
 is_eos
@@ -592,10 +598,9 @@ is_eos
 ; ---------------
 consume_bc
 ; consume a numeric expression from interp_ptr and return it in bc,
-; triggering the appropriate error if expression is missing/invalid
+; triggering the appropriate error if expression is missing/invalid/string
 ; or result is negative or >0xffff
 			call get_num_expr
-			jp c,fatal_error					; die if expression is missing entirely
 calc_pop_bc_validate
 ; pop value from calculator stack into bc,
 ; triggering the appropriate error if expression is missing/invalid
@@ -607,11 +612,10 @@ calc_pop_bc_validate
 
 consume_a
 ; consume a numeric expression from interp_ptr and return it in a,
-; triggering the appropriate error if expression is missing/invalid
+; triggering the appropriate error if expression is missing/invalid/string
 ; or magnitude is >255. (Note: we allow negative values here, although
 ; calling functions invariably ignore the sign bit...)
 			call get_num_expr
-			jp c,fatal_error				; die if expression is missing entirely
 calc_pop_a_validate
 ; pop value from calculator stack into a,
 ; triggering appropriate error if expression is missing/invalid
@@ -804,8 +808,7 @@ bytes_text_end
 											; with here yet
 			
 cmd_cls
-			call nextchar_is_eos			; check syntax first; ensure next char is
-			jp nz,fatal_error				; end-of-statement
+			call assert_eos			; assert that an end-of-statement follows the CLS token; die if not
 			jr clear_screen
 			
 			fillto 0x0daf
@@ -895,44 +898,89 @@ skip_whitespace_done
 
 ; ---------------
 get_num_expr
-; read a number expression from interp_ptr and leave it pushed on the calculator stack
-; Return carry set if the numexpr is absent
-			call get_num_expr_2
-			ret c
+; read a number expression from interp_ptr and leave it pushed on the calculator stack.
+; Triggers a fatal error if expression is missing or not numeric
+			call get_expr			; just wrap get_expr with error checking
+			jp c,fatal_error	; trigger error if expression missing
+			jp nz,fatal_error	; trigger error if expression non-numeric
+			ret
+
+get_num_expr_8
+; read a level 8 number expression (i.e. that which is picked up as an argument to
+; numeric functions except for NOT) from interp_ptr and leave it pushed on the calculator stack.
+; Triggers a fatal error if expression is missing or not numeric
+			call get_expr_8			; just wrap get_expr with error checking
+			jp c,fatal_error	; trigger error if expression missing
+			jp nz,fatal_error	; trigger error if expression non-numeric
+			ret
+
+get_string_expr
+; read a number expression from interp_ptr and leave it pushed on the calculator stack.
+; Triggers a fatal error if expression is missing or not string
+			call get_expr			; just wrap get_expr with error checking
+			jp c,fatal_error	; trigger error if expression missing
+			jp nz,fatal_error	; trigger error if expression non-string
+			ret
+			
+get_expr
+; read a number or string expression from interp_ptr and leave it pushed on the calculator stack
+; Return carry set if the expression is absent. Return zero flag set if numeric, reset if string
+			call get_expr_2
+			ret c					; return if no level 2 expr found
+			ret nz				; return if level 2 expr is a string
 search_num_or
 			rst nextchar
 			cp 0xc5						; look for an OR op
 			jr z,num_or
-			or a						; if none found, return success (carry reset)
+			xor a						; if none found, return success (carry reset, zero set)
 			ret
 
 num_or
 ; handle the rest of the OR expression
 			rst consume					; consume the OR token
-			call get_num_expr_2			; get right operand
-			jp c,fatal_error			; syntax error if no num_expr found
+			call get_expr_2			; get right operand
+			jp c,fatal_error			; syntax error if no expr found
+			jp nz,fatal_error			; syntax error if operand is a string
 			; FIXME: perform OR op here
 			jr search_num_or			; return to look for further ORs
 			
-get_num_expr_2
+get_expr_2
 ; read a level 2 numexpr - one containing anything above OR in the order of precedence
-			call get_num_expr_4
-			ret c
+			call get_expr_4
+			ret c								; return if no level 4 expr found
+			jr nz,search_str_and	; if expr is a string, look for operands of a string-based AND
+												; otherwise look for a numeric AND
 search_num_and
 			rst nextchar
 			cp 0xc6		; AND
 			jr z,num_and				; if there's no AND, we're done
-			or a
+			xor a								; signal successful fetch of numeric expression (carry reset, zero set)
+			ret
+
+search_str_and
+			rst nextchar
+			cp 0xc6		; AND
+			jr z,str_and				; if there's no AND, we're done
+			or 1								; signal successful fetch of string expression (carry reset, zero reset)
 			ret
 			
 num_and
 			rst consume					; consume the AND token
-			call get_num_expr_4			; get right operand
-			jp c,fatal_error			; syntax error if no num_expr found
-			; FIXME: perform AND op here
+			call get_expr_4			; get right operand
+			jp c,fatal_error			; syntax error if no expr found
+			jp nz,fatal_error			; syntax error if right operand is a string
+			; FIXME: perform numeric AND op here
 			jr search_num_and			; look for additional ANDs
 
-; get_num_expr_3
+str_and
+			rst consume					; consume the AND token
+			call get_expr_4			; get right operand
+			jp c,fatal_error			; syntax error if no num_expr found
+			jp nz,fatal_error			; syntax error if right operand is a string
+			; FIXME: perform string AND op here
+			jr search_str_and			; look for additional ANDs
+
+; get_expr_3
 ; - this space unintentionally left blank
 ; (I thought NOT went here, but in fact that's at the top of the order of precedence
 ; so that we can have COS NOT 0 = COS (NOT 0) without COS 2^2 becoming COS (2^2).
@@ -941,10 +989,12 @@ num_and
 
 
 			
-get_num_expr_4
-; read a level 4 numexpr - one containing anything above AND in the order of precedence
-			call get_num_expr_5
+get_expr_4
+; read a level 4 expr - one containing anything above AND in the order of precedence
+			call get_expr_5
 			ret c
+			jr nz,search_str_comparator
+
 search_num_comparator
 			rst nextchar
 			cp '='
@@ -959,133 +1009,213 @@ search_num_comparator
 			jr z,num_greater_equals
 			cp 0xc9	; <>
 			jr z,num_not_equal
-			or a
+			xor a								; signal successful fetch of numeric expression (carry reset, zero set)
+			ret
+
+search_str_comparator
+			rst nextchar
+			cp '='
+			jr z,str_equals
+			cp '<'
+			jr z,str_less_than
+			cp '>'
+			jr z,str_greater_than
+			cp 0xc7	; <=
+			jr z,str_less_equals
+			cp 0xc8	; >=
+			jr z,str_greater_equals
+			cp 0xc9	; <>
+			jr z,str_not_equal
+			xor a								; signal successful fetch of numeric expression (carry reset, zero set)
 			ret
 			
 num_equals
-			call get_comparator_operand
+			call get_num_comparator_operand
 			; FIXME: perform = op here
 			jr search_num_comparator
 num_less_than
-			call get_comparator_operand
+			call get_num_comparator_operand
 			; FIXME: perform < op here
 			jr search_num_comparator
 num_greater_than
-			call get_comparator_operand
+			call get_num_comparator_operand
 			; FIXME: perform > op here
 			jr search_num_comparator
 num_less_equals
-			call get_comparator_operand
+			call get_num_comparator_operand
 			; FIXME: perform <= op here
 			jr search_num_comparator
 num_greater_equals
-			call get_comparator_operand
+			call get_num_comparator_operand
 			; FIXME: perform >= op here
 			jr search_num_comparator
 num_not_equal
-			call get_comparator_operand
+			call get_num_comparator_operand
 			; FIXME: perform <> op here
 			jr search_num_comparator
 
-get_comparator_operand
-			rst consume
-			call get_num_expr_5
-			ret nc
-			rst fatal_error
+str_equals
+			call get_str_comparator_operand
+			; FIXME: perform = op here
+			jr search_str_comparator
+str_less_than
+			call get_str_comparator_operand
+			; FIXME: perform < op here
+			jr search_str_comparator
+str_greater_than
+			call get_str_comparator_operand
+			; FIXME: perform > op here
+			jr search_str_comparator
+str_less_equals
+			call get_str_comparator_operand
+			; FIXME: perform <= op here
+			jr search_str_comparator
+str_greater_equals
+			call get_str_comparator_operand
+			; FIXME: perform >= op here
+			jr search_str_comparator
+str_not_equal
+			call get_str_comparator_operand
+			; FIXME: perform <> op here
+			jr search_str_comparator
 
-get_num_expr_5
-; read a level 5 numexpr - one containing anything above comparators in the order of precedence
-			call get_num_expr_6
+get_num_comparator_operand
+			rst consume				; consume the operator token
+			call get_expr_5		; get right-hand expression
+			jp c,fatal_error	; die if it's missing
+			jp nz,fatal_error	; die if it isn't numeric
+			ret
+get_str_comparator_operand
+			rst consume				; consume the operator token
+			call get_expr_5		; get right-hand expression
+			jp c,fatal_error	; die if it's missing
+			jp z,fatal_error	; die if it isn't string
+			ret
+
+get_expr_5
+; read a level 5 expr - one containing anything above comparators in the order of precedence
+			call get_expr_6
 			ret c
+			jr nz,search_str_sum_op	; if left expression is a string, search for + (for concatenation)
+											; but not -
 search_num_sum_op
 			rst nextchar
 			cp '+'
 			jr z,num_plus
 			cp '-'
 			jr z,num_minus
-			or a
+			xor a								; signal successful fetch of numeric expression (carry reset, zero set)
 			ret
+search_str_sum_op
+			rst nextchar
+			cp '+'
+			jr z,str_concat
+			or 1								; signal successful fetch of string expression (carry reset, zero reset)
+			ret
+
 num_plus
-			rst consume
-			call get_num_expr_6
-			jp c,fatal_error
+			rst consume							; consume + token
+			call get_expr_6					; fetch right-hand expression
+			jp c,fatal_error				; die if right-hand expression is missing
+			jp nz,fatal_error				; die if right-hand expression is a string
 			; FIXME: perform + op here
 			jr search_num_sum_op
 			
 num_minus
-			rst consume
-			call get_num_expr_6
-			jp c,fatal_error
+			rst consume							; consume - token
+			call get_expr_6					; fetch right-hand expression
+			jp c,fatal_error				; die if right-hand expression is missing
+			jp nz,fatal_error				; die if right-hand expression is a string			
 			; FIXME: perform - op here
 			jr search_num_sum_op
 
-get_num_expr_6
+str_concat
+			rst consume							; consume + token
+			call get_expr_6					; fetch right-hand expression
+			jp c,fatal_error				; die if right-hand expression is missing
+			jp z,fatal_error				; die if right-hand expression is numeric			
+			; FIXME: perform + (concat) op here
+			jr search_str_sum_op
+
+get_expr_6
 ; read a level 6 numexpr - one containing anything above binary +/- in the order of precedence
-			call get_num_expr_7
+			call get_expr_7
 			ret c
+			ret nz					; return if it's a string (no currently-recognised operators apply to
+											; strings at level 6)
+											; TODO: detect string slicing operations at this point;
+											; look for a following '(' and if found, read string slicing parameters
 search_num_product
 			rst nextchar
 			cp '*'
 			jr z,num_multiply
 			cp '/'
 			jr z,num_divide
-			or a
+			xor a								; signal successful fetch of numeric expression (carry reset, zero set)
 			ret
 num_multiply
 			rst consume
-			call get_num_expr_7
+			call get_expr_7
 			jp c,fatal_error
+			jp nz,fatal_error
 			; FIXME: perform * op here
 			jr search_num_product
 num_divide
 			rst consume
-			call get_num_expr_7
+			call get_expr_7
 			jp c,fatal_error
+			jp nz,fatal_error
 			; FIXME: perform / op here
 			jr search_num_product
 			
-get_num_expr_7
+get_expr_7
 ; read a level 7 numexpr - one containing anything above * and / in the order of precedence
-			call get_num_expr_8
+			call get_expr_8
 			ret c
+			ret nz				; return if it's a string (no operators apply to strings at level 7)
 search_num_power
 			rst nextchar
 			cp '^'
 			jr z,num_power
-			or a
+			xor a								; signal successful fetch of numeric expression (carry reset, zero set)
 			ret
 num_power
 			rst consume
-			call get_num_expr_8
+			call get_expr_8
 			jp c,fatal_error
+			jp nz,fatal_error
 			; FIXME: perform ^ op here
 			jr search_num_power
 			
-get_num_unary_plus
-			rst consume				; cunning tail recursion, since unary plus is a no-op
-get_num_expr_8
+get_unary_plus
+			rst consume				; cunning tail recursion, since unary plus is a no-op.
+							; Doing it this way means that there's no place to validate that the
+							; expression following the + is numeric, but in fact the original ROM
+							; doesn't do that either: PRINT +"hello" is valid. That's a good sign
+							; that we're doing something right :-)
+get_expr_8
 ; read a level 8 expr - one above ^ in the order of precedence
 			rst nextchar
 			cp '('					; Look for bracketed expressions
-			jr z,get_num_bracketed
+			jr z,get_bracketed
 			cp '-'
 			jr z,get_num_unary_minus
 			cp '+'
-			jr z,get_num_unary_plus
+			jr z,get_unary_plus
 			cp '.'					; Look for characters '.' or 0-9
 			jr z,get_num_literal	; which signal an upcoming number literal
 				; (in fact so does BIN, but we catch that later on through
 				; the function vector table)
 			cp '0'
-			jp c,fatal_error		; anything else below '0' is invalid
+			ret c		; anything else below '0' is invalid / marks a missing expression
 			cp '9'+1
 			jr c,get_num_literal
 				; TODO: grok variable names
-				; For now treat everything else under 0xa5 as a syntax error
+				; For now treat everything else under 0xa5 as a 
 			sub 0xa5
-			jp c,fatal_error
-			cp 0x20					; anything >= 0xc5 is invalid
-			jp nc,fatal_error
+			ret c
+			cp 0x20					; anything >= 0xc5 is invalid (marks a missing expression)
+			jr nc,return_missing_expr
 			ld l,a					; look up code in function vector table
 			ld h,0
 			add hl,hl
@@ -1097,23 +1227,32 @@ get_num_expr_8
 			rst consume			; advance past function token
 			push de
 			ret
+return_missing_expr
+			scf
+			ret
 
-get_num_bracketed
+get_bracketed
 			rst consume				; consume left bracket
-			call get_num_expr		; evaluate everything within brackets
+			call get_expr		; evaluate everything within brackets
+			jp c,fatal_error	; die if no expression found
+			push af						; remember zero flag (which indicates whether bracketed expression
+												; is numeric or string
 			rst nextchar			; Next char must be ')', or else
 			cp ')'					; it will make baby Jesus cry
 			jp nz,fatal_error
+											; NOTE: this leaves AF on stack; we'll want to pop this before jumping
+											; to fatal_error, if and when we ever implement recovery from 'fatal' errors
 			rst consume			; consume right bracket
-			or a
+			pop af					; recall zero/carry flags for return code
 			ret
 			
 get_num_unary_minus
 			rst consume
-			call get_num_expr_8
+			call get_expr_8
 			jp c, fatal_error
+			jp nz,fatal_error
 			; FIXME: perform unary minus op here
-			or a
+			xor a								; signal successful fetch of numeric expression (carry reset, zero set)
 			ret
 
 get_num_literal
@@ -1132,7 +1271,7 @@ get_num_find_0e
 			dec hl				; move back to final byte read, as 'consume' always advances by at least one byte
 			ld (interp_ptr),hl
 			rst consume		; move to next character, skipping any whitespace
-			or a					; signal success
+			xor a								; signal successful fetch of numeric expression (carry reset, zero set)
 			ret
 
 num_func_table
@@ -1178,18 +1317,18 @@ func_peek
 ; TODO: size-optimise by combining all functions that just call a single calculator op corresponding
 ; to their index number
 			call get_num_expr_8	; fetch numeric operand 
-			jp c,fatal_error	; die if no valid numeric expression was found
 			rst calc					; perform PEEK operation
 			db cc_peek
 			db cc_endcalc
+			xor a								; signal successful fetch of numeric expression (carry reset, zero set)
 			ret
 func_in
 ; IN function
 			call get_num_expr_8	; as for func_peek
-			jp c,fatal_error
 			rst calc
 			db cc_in
 			db cc_endcalc
+			xor a								; signal successful fetch of numeric expression (carry reset, zero set)
 			ret
 
 ; ---------------
@@ -1209,8 +1348,10 @@ cmd_border
 get_colour_arg
 ; fetch a numeric argument and ensure that it's a valid colour; return it in A
 ; TODO: handle pseudo-colours 8 and 9 (but not for BORDER)
-			call consume_a			; fetch colour argument into a
-			jr z,err_out_of_range	; explicitly forbid negative values, because consume_a doesn't
+			call get_num_expr		; read colour argument
+			call assert_eos
+			call calc_pop_a_validate			; fetch colour argument into a
+			jr z,err_out_of_range	; explicitly forbid negative values, because calc_pop_a_validate doesn't
 			cp 8								; ensure it's <8
 			jr nc,err_out_of_range
 			ret
@@ -1247,15 +1388,17 @@ cmd_paper
 ; ---------------
 cmd_clear
 ; process CLEAR command
-			call vanilla_clear					; do stock CLEAR actions (clear screen and vars)
-			call get_num_expr					; look for a numeric argument
-			ret c								; return if there isn't one
+			call get_expr								; look for optional argument
+			jr c,cmd_clear_no_arg			; if not present, just perform stock CLEAR actions (clear screen and vars)
+			jp nz,fatal_error					; die if argument is a string
+			call assert_eos						; die if expression is not followed by end of statement
 			call calc_pop_bc_validate		; pop argument into bc, ensuring that it's positive and within 16 bits
-			ld hl,(calc_stack_end)				; check that it's somewhere in spare memory
+
+			call vanilla_clear					; do stock CLEAR actions (clear screen and vars)
+			sbc hl,bc					; check that requested address (BC) is above bottom of free memory (HL)
 				; TODO: consider making the limit slightly above calc_stack_end, for some
 				; breathing room (could do INC H here, but 256 bytes breathing room
 				; is probably excessive)
-			sbc hl,bc
 			jp nc,err_out_of_range				; RAMTOP no good...
 			ld h,b
 			ld l,c
@@ -1264,8 +1407,11 @@ cmd_clear
 			jp interp							; and return to interpreter
 												; (without doing a RET)
 
+cmd_clear_no_arg
+			call assert_eos					; ensure that end-of-statement follows CLEAR
 vanilla_clear
 ; perform the actions of a parameterless CLEAR: clear the screen and delete variables.
+; Return with calc_stack_end (address of bottom of free memory) in HL.
 ; Also performed on RUN.
 			call clear_screen
 			ld hl,(vars_addr)					; collapse all memory areas
@@ -1277,24 +1423,30 @@ cmd_run
 ; process RUN command
 			pop hl								; override return address
 			call vanilla_clear					; do stock CLEAR actions
-			call get_num_expr
+			call get_expr							; fetch optional argument
 			jr c,run_no_arg						; if none found, go to line 0
-			call calc_pop_bc_validate	; if found, retrieve it into bc, ensuring it's
+			jp nz,fatal_error					; die if it's a string rather than a number
+			call assert_eos						; ensure end-of-statement follows argument
+			call calc_pop_bc_validate	; retrieve argument into bc, ensuring it's
 			jp goto_bc								; within 0<=bc<=0xffff
 run_no_arg
+			call assert_eos						; ensure end-of-statement follows RUN
 			ld bc,0
 			jp goto_bc
 
 ; ---------------
 cmd_randomize
 ; process RANDOMIZE command
-			call get_num_expr					; look for numeric argument
+			call get_expr						; look for optional argument
 			jr c,randomize_frames				; if none supplied, use FRAMES
+			jp nz,fatal_error				; die if it's a string rather than numeric
+			call assert_eos						; ensure end-of-statement follows argument
 			call calc_pop_bc_validate		; if one supplied, check it's within 0<=bc<=0xffff
 			ld a,b								; check if it's 0
 			or c
 			jr nz,randomize_bc					; if not, use that as our seed
 randomize_frames
+			call assert_eos						; ensure end-of-statement follows RANDOMIZE
 			ld bc,(frames)
 randomize_bc
 			ld (rand_seed),bc
@@ -1310,6 +1462,9 @@ cmd_poke
 			jp nz,fatal_error
 			rst consume								; consume the comma
 			call consume_a						; fetch byte argument
+			push af
+			call assert_eos
+			pop af
 			pop hl
 			ld (hl),a									; perform the poke
 			ret
@@ -1323,6 +1478,9 @@ cmd_out
 			jp nz,fatal_error
 			rst consume								; consume the comma
 			call consume_a						; fetch byte argument
+			push af
+			call assert_eos
+			pop af
 			pop bc
 			out (c),a									; perform the output
 			ret

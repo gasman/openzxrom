@@ -24,7 +24,7 @@
 #                 Lancs, PR6 9NE, United Kingdom
 
 openzxrom.bin: rom.asm splash_screen.asm clairsys.bin
-	pasmo rom.asm openzxrom.bin
+	pasmo rom.asm openzxrom.bin openzxrom.sym
 
 clean:
 	rm -f openzxrom.bin
