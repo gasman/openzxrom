@@ -21,7 +21,7 @@ routines in the ZX ROM.
 	Does not handle scrolling upon reaching the bottom of the screen.
 
 0x0028: Calculator mode
-	Calculator opcodes supported: 0x2b (PEEK), 0x2c (IN)
+	Calculator opcodes supported: 0x2b (PEEK), 0x2c (IN), 0x2d (USR num)
 
 0x0038: IM1 interrupt service routine
 	Updates FRAMES system variable; no keyboard scanning.
@@ -37,6 +37,11 @@ routines in the ZX ROM.
 	0x0daf is another valid entry point.
 	
 0x203c: Print a string
+
+0x22aa: Translate coordinates to screen address
+
+0x22e5: Plot a pixel
+	Does not account for attributes or INVERSE / OVER state
 
 0x2ab6: PUSH contents of AEDCB to calculator stack
 
@@ -61,6 +66,7 @@ BASIC commands supported
 	REM
 	GO TO
 	POKE
+	PLOT
 	RUN
 	RANDOMIZE
 	CLS
@@ -68,8 +74,8 @@ BASIC commands supported
 BASIC commands not supported:
 	DEF FN, CAT, FORMAT, MOVE, ERASE, OPEN #, CLOSE #, MERGE, VERIFY, BEEP, CIRCLE,
 	FLASH, BRIGHT, INVERSE, OVER, LPRINT, LLIST, READ, DATA, RESTORE, CONTINUE,
-	DIM, FOR, GO SUB, INPUT, LOAD, LIST, LET, PAUSE, NEXT, PRINT, PLOT, SAVE, IF,
-	DRAW, RETURN, COPY
+	DIM, FOR, GO SUB, INPUT, LOAD, LIST, LET, PAUSE, NEXT, PRINT, SAVE, IF, DRAW,
+	RETURN, COPY
 	
 Numeric expression support
 --------------------------
@@ -84,7 +90,7 @@ Numeric expression support
 		Arithmetic ( + , - , * , / , ^ ) - unary '+' trivially skipped over, others
 			parsed but not evaluated
 		Functions:
-			IN, PEEK
+			IN, PEEK, USR (numeric)
 		  Others parsed but not evaluated (arguments not parsed)
 	
 String expression support
