@@ -27,4 +27,4 @@ openzxrom.bin: rom.asm splash_screen.asm clairsys.bin
 	pasmo rom.asm openzxrom.bin openzxrom.sym
 
 clean:
-	rm -f openzxrom.bin
+	rm -f openzxrom.bin openzxrom.sym
