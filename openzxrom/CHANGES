@@ -1,6 +1,17 @@
 OpenZXRom 200x-xx-xx
-- Changed system font to Clairsys
-  <http://www.type-invaders.com/zxspectrum/index.html> by Paul van der Laan
+- calc_pop_bc and calc_pop_a now handle floating point values
+- RPN calculator mode put in place ('calc' @ 0x0028), although only a limited
+  number of commands are supported at present
+- Expression parser (was 'get_num_expr', now 'get_expr') extended to work with
+  both string and numeric expressions, although no string expressions are fully
+  parsed yet
+- PEEK and IN functions implemented ('func_peek' / 'func_in')
+- POKE and OUT commands implemented ('cmd_poke' / 'cmd_out')
+- USR (numeric) function implemeted ('func_usr')
+- PLOT command implemented ('cmd_plot', plus entry points 'pixel_addr'
+  and 'plot_bc')
+- Changed system font to Clairsys by Paul van der Laan
+  <http://www.type-invaders.com/>
 
 OpenZXRom 2006-06-18
 - Basic interpreter core ('interp')
