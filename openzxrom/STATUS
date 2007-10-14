@@ -77,22 +77,20 @@ BASIC commands not supported:
 	DIM, FOR, GO SUB, INPUT, LOAD, LIST, LET, PAUSE, NEXT, PRINT, SAVE, IF, DRAW,
 	RETURN, COPY
 	
-Numeric expression support
---------------------------
+Expression support
+------------------
 	Numeric literals - supported
+	String literals - supported
 	Bracketed expressions - supported
 	Variables - not supported
 	Array subscripts - not supported
 	Operators:
 		Boolean (OR , AND , NOT) - parsed but not evaluated
 		Numeric comparison ( = , < , > , <> , <= , >= ) - parsed but not evaluated
-		String comparison ( = , < , > , <> , <= , >= ) - not parsed
+		String comparison ( = , < , > , <> , <= , >= ) - parsed but not evaluated
+		String concatenation (+) - parsed but not evaluated
 		Arithmetic ( + , - , * , / , ^ ) - unary '+' trivially skipped over, others
 			parsed but not evaluated
 		Functions:
 			IN, PEEK, USR (numeric)
 		  Others parsed but not evaluated (arguments not parsed)
-	
-String expression support
--------------------------
-	None.

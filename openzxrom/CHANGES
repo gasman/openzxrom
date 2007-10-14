@@ -3,8 +3,7 @@ OpenZXRom 200x-xx-xx
 - RPN calculator mode put in place ('calc' @ 0x0028), although only a limited
   number of commands are supported at present
 - Expression parser (was 'get_num_expr', now 'get_expr') extended to work with
-  both string and numeric expressions, although no string expressions are fully
-  parsed yet
+  both string and numeric expressions
 - PEEK and IN functions implemented ('func_peek' / 'func_in')
 - POKE and OUT commands implemented ('cmd_poke' / 'cmd_out')
 - USR (numeric) function implemeted ('func_usr')
@@ -12,6 +11,7 @@ OpenZXRom 200x-xx-xx
   and 'plot_bc')
 - Changed system font to Clairsys by Paul van der Laan
   <http://www.type-invaders.com/>
+- Source now split into multiple files for easier maintenance
 
 OpenZXRom 2006-06-18
 - Basic interpreter core ('interp')
