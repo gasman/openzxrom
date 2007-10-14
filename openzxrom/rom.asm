@@ -855,12 +855,13 @@ print_err_done_lp
 
 ; table of error offsets
 err_table
-			dw report_0, 0, 0, 0, 0, 0, 0, 0
+			dw report_0, 0, 0, 0, report_4, 0, 0, 0
 			dw 0, 0, 0, report_b, 0, 0, 0, 0
 			dw 0, 0, 0, 0, 0, 0, 0, 0
 			dw 0, 0, 0, report_r
 
 report_0	db "Program finished", 0	; also used for report 9 (STOP statement)
+report_4	db "Out of memory", 0
 report_b	db "Out of range", 0	; also used for report K (Invalid colour)
 									; and M (Ramtop no good)
 report_r	db "Loading error! :-(", 0
@@ -1026,7 +1027,7 @@ search_str_comparator
 			jr z,str_greater_equals
 			cp 0xc9	; <>
 			jr z,str_not_equal
-			xor a								; signal successful fetch of numeric expression (carry reset, zero set)
+			or 1								; signal successful fetch of string expression (carry reset, zero reset)
 			ret
 			
 num_equals
@@ -1196,6 +1197,8 @@ get_unary_plus
 get_expr_8
 ; read a level 8 expr - one above ^ in the order of precedence
 			rst nextchar
+			cp '"'					; Look for quotes, which begin a string literal
+			jr z,get_str_literal
 			cp '('					; Look for bracketed expressions
 			jr z,get_bracketed
 			cp '-'
@@ -1268,12 +1271,97 @@ get_num_find_0e
 				; TODO: check for out-of-memory condition
 			ldir
 			ld (calc_stack_end),de
-			dec hl				; move back to final byte read, as 'consume' always advances by at least one byte
-			ld (interp_ptr),hl
-			rst consume		; move to next character, skipping any whitespace
+			ld (interp_ptr),hl	; write interp_ptr back, now pointing to byte after numeric literal
+			call skip_whitespace	; advance interp_ptr past any trailing whitespace
 			xor a								; signal successful fetch of numeric expression (carry reset, zero set)
 			ret
+			
+get_str_literal
+; enter with HL pointing to the opening " character;
+; push the string onto the calculator stack
+			inc hl	; advance to the first character inside the "
+			ld (interp_ptr),hl ; store starting position, so we can return here for second pass
 
+; first pass over string; get length of string, accounting for embedded " characters			
+		  ld bc,0						; bc contains string length
+		  ld a,'"'
+string_lit_len_lp
+		  cp (hl)						; check whether next char is "
+		  inc hl						; advance pointer
+		  jr z,found_quote
+		  inc bc						; if not ", count it as one character
+		  jr string_lit_len_lp
+found_quote
+		  cp (hl)						; is there a second " character?
+		  jr nz,string_lit_len_done    ; if not, we've reached the end of the string
+		  inc bc						; if it is, count that as one more character
+		  inc hl						; advance past it
+		  jr string_lit_len_lp	; and continue counting chars
+
+string_lit_len_done
+			push bc						; stack 1: string length
+; move calculator stack up by that amount to make room;
+; first ensure that we have enough space
+			ld hl,(calc_stack_end)
+			push hl						; stack 2: old calc_stack_end
+			push hl						; stack 3: old calc_stack_end
+			add hl,bc					; hl = new calc_stack_end
+			jr c,err_out_of_memory	; die with out of memory error if this exceeds 0xffff
+			ex de,hl
+			ld hl,(ramtop)		; compare new calc_stack_end against ramtop
+			sbc hl,de
+			jp c,err_out_of_memory	; die with out of memory error if new calc_stack_end exceeds ramtop
+; now de = new calc_stack_end
+			ld (calc_stack_end),de
+; find size of calculator stack
+			pop hl  					; stack 3: old calc_stack_end
+			ld bc,(calc_stack)
+			sbc hl,bc ; hl = length of stack
+; copy calculator stack to new location
+			ld b,h
+			ld c,l
+			pop hl 						; stack 2: old calc_stack_end
+			jr z,string_lit_empty_stack	; don't perform copy if calc stack is empty
+			dec hl						; calc_stack_end points to first byte following calc stack,
+			dec de						; so decrement by one before starting the copy
+			lddr
+			inc de						; lddr decrements hl/de after copying last byte, so
+			inc hl						; increment again to arrive at correct calc_stack start address
+; now hl = start position for string, de = new calc_stack start
+; the same is true if we jumped here due to stack being empty;
+; in this case de = new calc_stack_end = calc_stack and hl = old calc_stack_end = old calc_stack
+string_lit_empty_stack
+			ld (calc_stack),de
+			push hl						; stack 2: old calc_stack = start address of string in heap
+			ex de,hl
+			ld hl,(interp_ptr)
+; copy string from interp_ptr to heap, accounting for embedded " characters
+			ld a,'"'
+string_lit_to_heap_lp
+			cp (hl)						; check if next char is "
+			jr z,string_lit_to_heap_quote	; handle quoting if it is
+			ldi								; otherwise, copy to heap and continue to next character
+			jr string_lit_to_heap_lp
+
+string_lit_to_heap_quote
+			inc hl						; skip past " character
+			cp (hl)						; is the following char a quote too?
+			jr nz,string_lit_to_heap_done	; if not, it's the end of the string
+			ldi								; if it is, copy the " and continue to next character
+			jr string_lit_to_heap_lp
+string_lit_to_heap_done
+			ld (interp_ptr),hl	; write back interp_ptr, now pointing to the byte after end of string
+			pop de  					; stack 2: start address of string on heap
+			pop bc						; stack 1: string length
+			call calc_push_aedcb	; write string parameters onto calculator stack
+			call skip_whitespace	; advance interp_ptr past any trailing whitespace
+			or 1								; signal successful fetch of string expression (carry reset, zero reset)
+			ret
+
+err_out_of_memory
+			rst 0x0008
+			db 0x03		; error code for 'out of memory'
+			
 num_func_table
 ; vector table of numeric function handlers
 ; dw fatal_error = not implemented yet, or invalid (e.g. AT - not a function)
