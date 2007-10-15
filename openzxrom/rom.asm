@@ -50,6 +50,12 @@ fillto		macro addr
 			include "functions.asm"
 ; Command execution
 			include "commands.asm"
+
+      fillto 0x1601
+; 'open stream' routine; as the only stream we handle at present is the upper screen,
+; this is a no-op
+      ret
+
 ; 0x203c: Print string
 			include "print_string.asm"
 ; 0x22a5: High-resolution graphics routines

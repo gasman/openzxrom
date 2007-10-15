@@ -77,6 +77,7 @@ load_bytes_loaded
 			xor c							; should xor to 0 if checksum is correct
 			ret nz							; if checksum doesn't match, return failure
 			scf								; otherwise set carry to indicate success
+			ei
 			ret
 
 			fillto 0x05e2
