@@ -1,4 +1,4 @@
-OpenZXRom 200x-xx-xx
+OpenZXRom 2007-10-15
 - calc_pop_bc and calc_pop_a now handle floating point values
 - RPN calculator mode put in place ('calc' @ 0x0028), although only a limited
   number of commands are supported at present

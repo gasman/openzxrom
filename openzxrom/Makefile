@@ -1,6 +1,6 @@
 # Makefile: Build script
 # From the OpenZXRom project
-# Copyright (c) 2005 Matthew Westcott
+# Copyright (c) 2005-2007 Matthew Westcott
 #
 # $Id: Makefile 16 2005-12-18 16:45:24Z gasman $
 #
