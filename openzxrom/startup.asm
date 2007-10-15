@@ -41,6 +41,7 @@ warm_start
 			ld (rand_seed),hl				; reset random seed to 0
 			ld (frames),hl					; reset frames counter to 0
 			ld (frames+2),a
+			ld (next_char_type),a		; next character is not a parameter to a control code
 			ld hl,font - 0x0100				; point to font bitmap
 			ld (font_ptr),hl
 			ld hl,prog_mem					; designate all memory from prog_mem
