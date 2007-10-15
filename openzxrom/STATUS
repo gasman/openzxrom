@@ -36,6 +36,10 @@ routines in the ZX ROM.
 0x0d6b: Clear screen
 	0x0daf is another valid entry point.
 	
+0x1601: Open stream
+	Often used to ensure that RST 0x0010 output is directed to the upper screen;
+	this is currently the only supported output mode, so this routine is a no-op.
+
 0x203c: Print a string
 
 0x22aa: Translate coordinates to screen address
