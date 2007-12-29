@@ -58,7 +58,7 @@ command_table
 			dw cmd_goto		; GO TO
 			dw fatal_error	; GO SUB
 			dw fatal_error	; INPUT
-			dw fatal_error	; LOAD
+			dw cmd_load	; LOAD
 			dw fatal_error	; LIST
 			dw fatal_error	; LET
 			dw fatal_error	; PAUSE
@@ -173,8 +173,9 @@ cmd_clear
 			jp nz,fatal_error					; die if argument is a string
 			call assert_eos						; die if expression is not followed by end of statement
 			call calc_pop_bc_validate		; pop argument into bc, ensuring that it's positive and within 16 bits
-
+			push bc
 			call vanilla_clear					; do stock CLEAR actions (clear screen and vars)
+			pop bc
 			sbc hl,bc					; check that requested address (BC) is above bottom of free memory (HL)
 				; TODO: consider making the limit slightly above calc_stack_end, for some
 				; breathing room (could do INC H here, but 256 bytes breathing room
@@ -262,3 +263,130 @@ cmd_out
 			pop bc
 			out (c),a									; perform the output
 			ret
+
+cmd_load
+; process LOAD command
+			; allocate 17*2 bytes of workspace, for 'actual' and 'expected' tape headers:
+			; 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F 20 21
+			; |--------------------actual----------------------| |--------------------expected--------------------|
+			; typ|-------filename------------| |len| |-params--| typ|-------filename------------| |len| |--params-|
+			ld hl,(calc_stack)
+			ex de,hl
+			ld bc,0x0022
+			call alloc_space
+			push de										; store workspace address
+			ld h,d										; pad buffer with spaces
+			ld l,e										; (only actually necessary for filename bytes of
+			ld (hl),' '								; 'expected' header, but who's counting...)
+			inc de
+			dec bc
+			ldir
+			
+			call get_string_expr			; fetch filename expression
+			call calc_pop_aedcb				; get address and length of string
+																; into DE and BC respectively
+
+			; get filename length in a; = BC or 10, whichever is less
+			ld a,b
+			or a
+			jr nz,filename_len_10
+			ld a,c
+			cp 0x0a
+			jr c,filename_len_lt_10
+filename_len_10
+			ld a,0x0a
+filename_len_lt_10
+
+			pop hl										; recall workspace address
+			push hl										; and store it again
+			ld bc,0x0012							; advance to first filename byte of header
+			add hl,bc
+
+			or a											; if a = 0, filename is empty (LOAD "")
+			jr nz,nonempty_filename
+			ld (hl),0xff							; mark empty filename with byte 0xff at the start
+			jr filename_copied
+
+nonempty_filename
+			ex de,hl									; hl = string buffer containing filename, de = header buffer
+			ld c,a
+			ld b,0
+			ldir											; copy filename 
+			
+filename_copied
+			; TODO: free the original string expression. (Would be a good idea to not actually
+			; pop AEDCB above so we still have its address and length on the stack, then...)
+
+			; continue parsing the instruction
+			call nextchar_is_eos			; are we at end of statement?
+			jr z,load_basic						; if so, we're loading basic
+			cp 0xaf										; otherwise, check if it's CODE
+			jr z,load_code
+			; TODO: grok DATA and SCREEN$
+			rst fatal_error						; reject anything else as invalid
+
+load_code
+			pop ix										; retrieve buffer address
+			ld (ix+0x11),0x03					; set expected filetype to 3 = Bytes
+			rst consume								; consume the CODE token
+
+			call nextchar_is_eos			; is this the end of the statement?
+			jr z,load_code_no_args		; treat as no-argument LOAD "filename"CODE if so
+			push ix
+			call consume_bc						; fetch CODE start address into bc
+			pop ix
+			ld (ix+0x1e),c						; store start address in 'expected' header
+			ld (ix+0x1f),b
+
+			call nextchar_is_eos			; end of statement now?
+			jr z,load_code_one_arg		; if so, treat as LOAD "filename"CODE start
+			cp ','										; otherwise, it must be ','
+			jp nz,fatal_error					; or else it's invalid
+			rst consume								; consume the comma
+			push ix
+			call consume_bc						; fetch CODE length into bc
+			pop ix
+			ld (ix+0x1c),c						; store code length in 'expected' header
+			ld (ix+0x1d),b
+			
+			call assert_eos						; end of statement must happen now
+				; now handle full LOAD "filename"CODE start,length form
+
+			call search_tape_header		; read tape headers until we get one that matches
+			ld e,(ix+0x1c)						; recall length from 'expected' buffer
+			ld d,(ix+0x1d)						; (which came from LOAD parameter)
+			ld c,(ix+0x1e)						; recall start address from 'expected' buffer
+			ld b,(ix+0x1f)						; (which came from LOAD parameter)
+			push bc										; set ix to start address
+			pop ix
+			jr load_code_datablock
+
+load_code_one_arg
+			call search_tape_header		; read tape headers until we get one that matches
+			ld e,(ix+0x0b)						; read length from actual tape header
+			ld d,(ix+0x0c)
+			ld c,(ix+0x1e)						; recall start address from 'expected' buffer
+			ld b,(ix+0x1f)						; (which came from LOAD parameter)
+			push bc										; set ix to start address
+			pop ix
+			jr load_code_datablock
+
+load_code_no_args
+			call search_tape_header		; read tape headers until we get one that matches
+			ld e,(ix+0x0b)						; read length from actual tape header
+			ld d,(ix+0x0c)
+			ld c,(ix+0x0d)						; read start address from actual tape header
+			ld b,(ix+0x0e)
+			push bc										; set ix to start address
+			pop ix
+load_code_datablock
+			ld a,0xff									; 0xff = load datablock
+			scf												; carry set = load (not verify)
+			jp load_bytes							; load data block and return to interpreter
+			
+load_basic
+			pop ix										; retrieve buffer address
+			ld (ix+0x11),0x00					; set expected filetype to 0 = Program
+			; TODO: implement loading BASIC
+			; (just move stuff from startup.asm here, basically)
+			rst fatal_error

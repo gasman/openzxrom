@@ -44,6 +44,8 @@ fillto		macro addr
 			include "clear_screen.asm"
 ; Error handling
 			include "errors.asm"
+; Memory management
+			include "memory.asm"
 ; Expression parsing / evaluation
 			include "expressions.asm"
 ; Function evaluation

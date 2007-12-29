@@ -45,7 +45,7 @@ get_string_expr
 ; Triggers a fatal error if expression is missing or not string
 			call get_expr			; just wrap get_expr with error checking
 			jp c,fatal_error	; trigger error if expression missing
-			jp nz,fatal_error	; trigger error if expression non-string
+			jp z,fatal_error	; trigger error if expression non-string
 			ret
 			
 get_expr

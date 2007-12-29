@@ -50,9 +50,7 @@ nextchar	ld hl,(interp_ptr)
 			fillto 0x0020
 ; RST 0x0020: consume next character of program
 ; (i.e. advance to next non-ignorable character; ignorable = space and control codes)
-consume		ld hl,interp_ptr
-			inc (hl)
-			jp skip_whitespace
+consume		jp consume_main
 			
 			fillto 0x0028
 ; RST 0x0028: enter calculator mode
@@ -67,6 +65,7 @@ fatal_error
 			
 			fillto 0x0038
 ; RST 0x0038: IM 1 interrupt service routine
+			push af
 			push hl
 			ld hl,frames
 			inc (hl)						; increment frames system variable,
@@ -78,6 +77,7 @@ fatal_error
 			inc (hl)
 done_frames
 			pop hl
+			pop af
 			ei
 			ret
 

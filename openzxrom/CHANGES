@@ -1,3 +1,13 @@
+OpenZXRom 200x-xx-xx
+- Routine to allocate arbitrary space in memory ('alloc_space')
+- LOAD command implemented ('cmd_load') (CODE only)
+- Bugfix: parameter to CLEAR is not lost during call to clear_screen
+- Bugfix: 'consume' (RST 0x0020) no longer wraps interp_ptr at 256b boundaries
+- Bugfix: 'skip_whitespace' now gets parameterless and one-parameter control
+  codes the right way round
+- Bugfix: IM1 interrupt service routine doesn't screw with flags
+- Bugfix: 'get_string_expr' logic reversed to not reject string expressions
+
 OpenZXRom 2007-10-15
 - calc_pop_bc and calc_pop_a now handle floating point values
 - RPN calculator mode put in place ('calc' @ 0x0028), although only a limited

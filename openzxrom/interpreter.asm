@@ -102,9 +102,14 @@ is_eos
 			ret
 
 ; ---------------
+; consume next character of program (called from RST 0x0020)
+; (i.e. advance to next non-ignorable character; ignorable = space and control codes)
+consume_main
+			ld hl,(interp_ptr)
+			inc hl
+			ld (interp_ptr),hl
 skip_whitespace
 ; Advance interp_ptr past any ignorable characters: space and control codes other than 0x0d
-
 			push af
 			ld hl,(interp_ptr)
 skip_whitespace_lp
@@ -121,9 +126,9 @@ skip_whitespace_lp
 			cp 0x16
 			jr nz,skip_whitespace_2	; all but 0x16 have 1 param, so skip 2 bytes for those
 			inc hl					; 0x16 (AT) has 2 params; 3 bytes in total
-skip_whitespace_1
-			inc hl
 skip_whitespace_2
+			inc hl
+skip_whitespace_1
 			inc hl
 			jr skip_whitespace_lp
 			

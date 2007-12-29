@@ -149,8 +149,9 @@ load_get_byte_lp
 			call load_get_edge
 			jr nc,load_fail
 			; throw away the result because we only need to work with one pulse,
-			; rather than the pair. TODO: Find out whether this is a really evil
-			; thing to do, and do something nicer if so
+			; rather than the pair. (As I understand it, pulses are only paired up
+			; to ensure that the signal is electrically centred at 0V, rather than
+			; for any data integrity reason - so this is an okay thing to do)
 			call load_get_edge
 			jr nc,load_fail
 			ld a,b
@@ -185,6 +186,40 @@ put_tape_message
 			inc de
 			ld bc,10
 			jp print_string
+			
+; enter with ix = pointer to a 2*17 byte buffer containing space to load
+; an 'actual' tape header, followed by a prefilled 'expected' tape header.
+; Return (with IX unchanged) after we have encountered a tape header which matches
+; the 'expected' header up to the first 11 bytes, or up to the first 0xff, whichever
+; is sooner. (11 bytes = file type identifier + 10-char filename)
+search_tape_header
+			push ix		; store start address of buffer
+			ld de,0x0011	; load 0x11 bytes
+			xor a	; a = 0x00 to load header
+			scf		; carry set = load (not verify)
+			call load_bytes	; load the header
+			pop ix
+			jr nc,search_tape_header	; resume search if loading error occurred
+			call describe_tape_file		; print header descriptor
+			
+			push ix				; point HL to actual header, DE to expected one
+			pop de
+			ld hl,0x0011
+			add hl,de
+			ex de,hl
+
+			ld b,0x0b				; compare buffers for 0x0b bytes
+compare_tape_header
+			ld a,(de)
+			cp 0xff					; byte 0xff = stop comparing, consider it a match
+			ret z						; found match, so return
+			cp (hl)
+			jr nz,search_tape_header	; if match fails, jump back to search for next
+			inc hl					; continue to next byte
+			inc de
+			djnz compare_tape_header
+			; if we get here, full header has matched
+			ret							; return successful match
 
 program_text
 			db 0x0d,"Program: " ; always starts on a new line
