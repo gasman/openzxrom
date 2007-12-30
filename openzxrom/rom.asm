@@ -60,7 +60,7 @@ fillto		macro addr
 
 ; 0x203c: Print string
 			include "print_string.asm"
-; 0x22a5: High-resolution graphics routines
+; 0x2298: High-resolution graphics routines
 			include "graphics.asm"
 ; 0x2ab6: Floating-point calculator routines
 			include "calculator.asm"
@@ -86,6 +86,7 @@ next_char_type	equ 0x5b02	; how to interpret next character received by RST 0x00
 							; 17 = x coordinate (PRINT TAB)
 font_ptr		equ 0x5c36	; pointer to font bitmap (minus 0x0100 bytes)
 curr_line_num	equ 0x5c45	; current line number
+border_colour	equ 0x5c48	; border colour (actually an attribute code: paper = border colour, ink = contrasting)
 vars_addr		equ 0x5c4b	; pointer to start of variables table
 next_line_ptr	equ 0x5c55	; pointer to first (header) byte of next program line
 interp_ptr		equ 0x5c5d	; pointer to bit of program currently being executed
@@ -94,6 +95,7 @@ calc_stack_end	equ 0x5c65	; pointer to first unused byte after the calculator st
 								; (and start of spare memory)
 rand_seed		equ 0x5c76	; seed for random number generator
 frames			equ 0x5c78	; 3-byte frame counter (lowest byte first)
+udg_ptr			equ 0x5c7b	; pointer to UDG bitmaps
 perm_attribute	equ 0x5c8d	; attribute value for global use (e.g. in CLS)
 temp_attribute	equ 0x5c8f	; attribute value for temporary use in putchar
 ramtop			equ 0x5cb2	; where to reset stack pointer to on NEW

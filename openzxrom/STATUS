@@ -12,12 +12,12 @@ routines in the ZX ROM.
 	Only a limited number of error messages are available.
 
 0x0010: Print a character
-	Character classes supported: Newline (0x0d), INK/PAPER controls (except
-	pseudo-colours 8 and 9), AT and TAB controls, standard characters (0x20-0x7f;
-	includes customised fonts).
-	Not supported: Comma control, cursor / backspace controls, FLASH / BRIGHT
-	controls, INVERSE / OVER controls, block graphics, user-defined graphics,
-	keyword tokens.
+	Character classes supported: Comma control (0x06), Newline (0x0d), INK/PAPER
+	controls (except pseudo-colours 8 and 9), FLASH / BRIGHT controls (except
+	'transparent' setting), AT and TAB controls, standard characters (0x20-0x7f;
+	includes customised fonts), user-defined graphics.
+	Not supported: cursor / backspace controls, INVERSE / OVER controls, block
+	graphics, keyword tokens.
 	Does not handle scrolling upon reaching the bottom of the screen.
 
 0x0028: Calculator mode
@@ -41,6 +41,8 @@ routines in the ZX ROM.
 	this is currently the only supported output mode, so this routine is a no-op.
 
 0x203c: Print a string
+
+0x229b: Set border colour to A
 
 0x22aa: Translate coordinates to screen address
 
@@ -69,7 +71,7 @@ BASIC commands supported
 	BORDER
 	REM
 	GO TO
-	LOAD (CODE only)
+	LOAD (except DATA)
 	POKE
 	PLOT
 	RUN

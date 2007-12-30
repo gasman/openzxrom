@@ -29,11 +29,15 @@ putchar_main
 			ld l,a
 			ld a,(next_char_type)			; are we expecting a parameter to a control code?
 			or a
-			jr z,putchar_no_param			; if not, skip to putchar_no_param
+			jp z,putchar_no_param			; if not, skip to putchar_no_param
 			cp 0x10							; is this an INK c colour?
 			jr z,putchar_ink
 			cp 0x11							; is this a PAPER c colour?
 			jr z,putchar_paper
+			cp 0x12							; is this a FLASH c setting?
+			jr z,putchar_flash
+			cp 0x13							; is this a BRIGHT c setting?
+			jr z,putchar_bright
 			cp 0x16							; is this an AT y coordinate?
 			jr z,putchar_at
 			cp 0x17							; is this a TAB x coordinate?
@@ -46,12 +50,7 @@ putchar_ink
 			; TODO: check for overflow and handle INK 8 / INK 9
 			ld a,(temp_attribute)
 			and 0xf8						; strip out previous ink colour
-			or l
-			ld (temp_attribute),a
-			xor a							; expect ordinary char in next call
-			ld (next_char_type),a			; to putchar
-			exx
-			ret
+			jr write_temp_attribute
 
 putchar_paper
 			; set temporary paper colour as specified in l
@@ -61,8 +60,26 @@ putchar_paper
 			sla l							; shift l to bits 3-5
 			ld a,(temp_attribute)
 			and 0xc7						; strip out previous paper colour
-			or l
-			ld (temp_attribute),a
+			jr write_temp_attribute
+
+putchar_flash
+			; set temporary FLASH attribute as specified in l
+			; TODO: check for overflow and handle FLASH 8
+			rrca
+			ld a,(temp_attribute)
+			and 0x7f						; strip out previous FLASH bit
+			jr write_temp_attribute
+
+putchar_bright
+			; set temporary BRIGHT attribute as specified in l
+			; TODO: check for overflow and handle BRIGHT 8
+			rrca
+			rrca
+			ld a,(temp_attribute)
+			and 0xbf						; strip out previous BRIGHT bit
+write_temp_attribute
+			or l								; merge bits from l into new attribute
+			ld (temp_attribute),a	; write back to temp_attribute
 			xor a							; expect ordinary char in next call
 			ld (next_char_type),a			; to putchar
 			exx
@@ -117,14 +134,31 @@ putchar_tab_no_wrap
 			ret
 
 putchar_no_param
-			ld a,l							; test whether character is plaintext (ASCII >= 0x20)
-			; TODO: handling of more characters outside 0x20 - 0x7F
-			cp 0x20
+			ld a,l
+			cp 0xa5							; test whether character is a keyword token (ASCII >= 0xa5)
+			jp nc,putchar_keyword
+			cp 0x90							; test whether character is a UDG (ASCII >= 0x90)
+			jr nc,putchar_udg
+			cp 0x80							; test whether character is a block graphic (ASCII >= 0x80)
+			jp nc,putchar_block_graphic
+			cp 0x20							; test whether character is plaintext (ASCII >= 0x20)
 			jr nc,putchar_plain
+			cp 0x06							; is character a comma control?
+			jr z,putchar_comma
 			cp 0x0d							; is character a newline?
 			jr z,putchar_newline
 			ld (next_char_type),a			; if not, store control code in
 											; next_char_type awaiting parameters
+			exx
+			ret
+			
+putchar_comma
+			; comma control: output whitespace until cursor address mod 16 is 0
+			ld a,' '
+			rst putchar						; output a space
+			ld a,(cursor_addr)		; test cursor_addr
+			and 0x0f							; loop unless cursor_addr & 0x0f is zero
+			jr nz,putchar_comma
 			exx
 			ret
 			
@@ -141,6 +175,17 @@ putchar_newline
 			ld (cursor_addr + 1),a
 			ret
 			
+putchar_udg
+			sub 0x90						; convert char to address within UDG table
+			ld l,a
+			ld h,0
+			add hl,hl
+			add hl,hl
+			add hl,hl
+			ld de,(udg_ptr)
+			add hl,de
+			jr copy_char_bitmap
+			
 putchar_plain
 			ld h,0							; convert char to address within font
 			add hl,hl
@@ -148,15 +193,17 @@ putchar_plain
 			add hl,hl
 			ld de,(font_ptr)
 			add hl,de
+; copy bitmap address pointed to by HL to current cursor position
+copy_char_bitmap
 			ld de,(cursor_addr)
 			push de
 			ld b,8
-copy_char_bitmap
+copy_char_bitmap_lp
 			ld a,(hl)
 			ld (de),a
 			inc d
 			inc l
-			djnz copy_char_bitmap
+			djnz copy_char_bitmap_lp
 			pop hl
 			push hl
 			; write attribute cell
@@ -182,3 +229,8 @@ copy_char_bitmap
 			ld (cursor_addr),hl
 			exx
 			ret
+
+putchar_keyword
+			rst fatal_error		; TODO: implement keyword printing
+putchar_block_graphic
+			rst fatal_error		; TODO: implement block graphic printing

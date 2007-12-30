@@ -30,9 +30,15 @@ cmd_new
 			
 cold_start
 ; startup operations
-			ld hl,udg_mem					; set RAMTOP to traditional location
-			ld (ramtop),hl
-				; TODO: detecting 16K models
+			; TODO: detecting 16K models
+			; copy bitmaps A-U to UDG memory
+			ld hl,font-0x0100+('A'*8)	; hl = start of 'A' bitmap
+			ld de,udg_mem-1
+			ld (ramtop),de					; set ramtop to base of UDG memory - 1
+			inc de
+			ld (udg_ptr),de					; set UDG pointer
+			ld bc,0x00a8						; copy 0x00a8 bytes of bitmaps
+			ldir										; perform the copy
 warm_start
 			ld hl,(ramtop)
 			ld sp,hl
@@ -41,6 +47,7 @@ warm_start
 			ld (rand_seed),hl				; reset random seed to 0
 			ld (frames),hl					; reset frames counter to 0
 			ld (frames+2),a
+			ei											; enable interrupts, as SP is somewhere safe now
 			ld (next_char_type),a		; next character is not a parameter to a control code
 			ld hl,font - 0x0100				; point to font bitmap
 			ld (font_ptr),hl
@@ -72,55 +79,17 @@ wait_enter
 			ld bc,loading_text_end - loading_text
 			call print_string
 
-			; load blocks from tape until we find a BASIC header
-search_basic_header
-			ld ix,(calc_stack_end)			; load tape header at start of spare memory
-			ld de,0x0011					; 17 bytes long
-			xor a							; a=0 for header
-			scf								; carry=set for load
-			push ix
-			call load_bytes
+			; set up 'expected tape header' buffer for LOAD ""
+			ld hl,(calc_stack)				; allocate 0x0022 bytes for actual / expected headers
+			ex de,hl
+			ld bc,0x0022
+			call alloc_space
+			push de										; store buffer address to be popped at start of load_basic routine
+			push de										; transfer buffer address to ix
 			pop ix
-			jr nc, search_basic_header
-			call describe_tape_file			; print filename
-			ld a,(ix+0)
-			or a
-			jr nz,search_basic_header
-			; Read the BASIC header and make room for the incoming program
-			ld e,(ix+0x0d)					; get LINE number
-			ld d,(ix+0x0e)
-			push de
-			ld hl,prog_mem
-			push hl
-			ld e,(ix+0x0f)					; get BASIC length
-			ld d,(ix+0x10)
-			add hl,de
-			ld (vars_addr),hl				; store position of variables table
-			pop hl							; recall prog_mem
-			push hl
-			ld e,(ix+0x0b)					; get full data length
-			ld d,(ix+0x0c)
-			add hl,de						; find new location of spare memory
-			; TODO: compare with RAMTOP and complain if RAMTOP too low
-			ld (calc_stack),hl				; set new spare mem location
-			ld (calc_stack_end),hl
-			pop ix							; recall prog_mem again
-			ld a,0xff						; a=0xff for data block
-			scf								; carry set for load
-			call load_bytes
-			jr nc,report_loading_error
-			pop bc
-			jp goto_bc						; jump to LINE number
-				; - this will happen even if a LINE number wasn't set, since in
-				; that situation the bytes will come in as something >= 32768,
-				; and for any non-diabolically-hacked program GO TO 32768 will
-				; result in an immediate 'program finished', which is what we want.
-			; From goto_bc we launch straight into the main interpreter loop.
+			ld (ix+0x12),0xff					; set first byte of expected filename to 0xff, to indicate 'any filename'
+			jp load_basic							; jump into load_basic
 			
-report_loading_error
-			rst error
-			db 0x1a			; code for loading error
-
 loading_text
 			db "Loading..."
 loading_text_end

@@ -23,6 +23,21 @@
 ; Postal address: 14 Daisy Hill Drive, Adlington, Chorley,
 ;                 Lancs, PR6 9NE, United Kingdom
 
+			fillto 0x2298
+cmd_border
+; process BORDER command
+			call get_colour_arg
+			; entry point set_border at 0x229b - used by various Jonathan Cauldwell games
+			; (Egghead 4, Lunaris, Fantastic Mr Fruity)
+set_border
+			out (0xfe),a			; change the border colour
+			add a,a						; shift left to make it the PAPER component of an attribute
+			add a,a
+			add a,a
+				; TODO: fill INK with a contrasting colour (could be tricky in the two remaining bytes...)
+			ld (border_colour),a
+			ret
+			
 			fillto 0x22a5
 pixel_addr
 ; Find screen address and byte position for the given pixel coordinates.

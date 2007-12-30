@@ -1,6 +1,13 @@
 OpenZXRom 200x-xx-xx
 - Routine to allocate arbitrary space in memory ('alloc_space')
-- LOAD command implemented ('cmd_load') (CODE only)
+- LOAD command implemented ('cmd_load') (except DATA)
+- 'cmd_border' moved to 0x2298 to provide 'set_border' entry point at 0x229b
+  (used by various Jonathan Cauldwell games)
+- Character printing supports comma control (CHR$ 6)
+- Character printing supports flash / bright controls (CHR$ 18 and 19)
+- Character printing supports user-defined graphics
+- Implemented 'border_colour' system variable to preserve border colour after
+	tape loading
 - Bugfix: parameter to CLEAR is not lost during call to clear_screen
 - Bugfix: 'consume' (RST 0x0020) no longer wraps interp_ptr at 256b boundaries
 - Bugfix: 'skip_whitespace' now gets parameterless and one-parameter control

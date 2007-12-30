@@ -62,7 +62,7 @@ load_flag_ok
 			or e
 			jr z,load_bytes_loaded			; test if we've loaded all bytes
 			call load_get_byte
-			ret nc
+			jr nc,load_bytes_exit
 			ld (ix),c						; store byte in memory
 			inc ix
 			ex af,af'
@@ -72,11 +72,20 @@ load_flag_ok
 load_bytes_loaded
 			; get checksum byte
 			call load_get_byte
-			ret nc
+			jr nc,load_bytes_exit
 			ex af,af'
 			xor c							; should xor to 0 if checksum is correct
-			ret nz							; if checksum doesn't match, return failure
+			jr nz,load_bytes_exit		; if checksum doesn't match, return failure
 			scf								; otherwise set carry to indicate success
+; common exit route, regardless of success or failure
+load_bytes_exit
+			ex af,af'					; preserve flags
+			ld a,(border_colour)	; restore border colour
+			srl a
+			srl a
+			srl a
+			out (0xfe),a
+			ex af,af'					; restore flags
 			ei
 			ret
 

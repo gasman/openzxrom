@@ -424,41 +424,12 @@ found_quote
 		  jr string_lit_len_lp	; and continue counting chars
 
 string_lit_len_done
-			push bc						; stack 1: string length
-; move calculator stack up by that amount to make room;
-; first ensure that we have enough space
-			ld hl,(calc_stack_end)
-			push hl						; stack 2: old calc_stack_end
-			push hl						; stack 3: old calc_stack_end
-			add hl,bc					; hl = new calc_stack_end
-			jr c,err_out_of_memory	; die with out of memory error if this exceeds 0xffff
-			ex de,hl
-			ld hl,(ramtop)		; compare new calc_stack_end against ramtop
-			sbc hl,de
-			jp c,err_out_of_memory	; die with out of memory error if new calc_stack_end exceeds ramtop
-; now de = new calc_stack_end
-			ld (calc_stack_end),de
-; find size of calculator stack
-			pop hl  					; stack 3: old calc_stack_end
-			ld bc,(calc_stack)
-			sbc hl,bc ; hl = length of stack
-; copy calculator stack to new location
-			ld b,h
-			ld c,l
-			pop hl 						; stack 2: old calc_stack_end
-			jr z,string_lit_empty_stack	; don't perform copy if calc stack is empty
-			dec hl						; calc_stack_end points to first byte following calc stack,
-			dec de						; so decrement by one before starting the copy
-			lddr
-			inc de						; lddr decrements hl/de after copying last byte, so
-			inc hl						; increment again to arrive at correct calc_stack start address
-; now hl = start position for string, de = new calc_stack start
-; the same is true if we jumped here due to stack being empty;
-; in this case de = new calc_stack_end = calc_stack and hl = old calc_stack_end = old calc_stack
-string_lit_empty_stack
-			ld (calc_stack),de
-			push hl						; stack 2: old calc_stack = start address of string in heap
-			ex de,hl
+			ld de,(calc_stack)	; allocate the required amount of space
+			call alloc_space		; below the calculator stack
+			
+			push bc						; store string length and address
+			push de
+
 			ld hl,(interp_ptr)
 ; copy string from interp_ptr to heap, accounting for embedded " characters
 			ld a,'"'
@@ -476,8 +447,8 @@ string_lit_to_heap_quote
 			jr string_lit_to_heap_lp
 string_lit_to_heap_done
 			ld (interp_ptr),hl	; write back interp_ptr, now pointing to the byte after end of string
-			pop de  					; stack 2: start address of string on heap
-			pop bc						; stack 1: string length
+			pop de  					; recall string address and length
+			pop bc
 			call calc_push_aedcb	; write string parameters onto calculator stack
 			call skip_whitespace	; advance interp_ptr past any trailing whitespace
 			or 1								; signal successful fetch of string expression (carry reset, zero reset)

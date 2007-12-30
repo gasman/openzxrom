@@ -120,13 +120,6 @@ goto_found
 			ld (next_line_ptr),ix
 			jp interp_new_line
 
-cmd_border
-; process BORDER command
-			call get_colour_arg
-			out (0xfe),a			; change the border colour
-				; TODO: save in a system variable to be preserved during BEEP / after LOAD etc
-			ret
-			
 get_colour_arg
 ; fetch a numeric argument and ensure that it's a valid colour; return it in A
 ; TODO: handle pseudo-colours 8 and 9 (but not for BORDER)
@@ -319,9 +312,11 @@ filename_copied
 
 			; continue parsing the instruction
 			call nextchar_is_eos			; are we at end of statement?
-			jr z,load_basic						; if so, we're loading basic
+			jp z,load_basic						; if so, we're loading basic
 			cp 0xaf										; otherwise, check if it's CODE
 			jr z,load_code
+			cp 0xaa										; check if it's SCREEN$
+			jr z,load_screen
 			; TODO: grok DATA and SCREEN$
 			rst fatal_error						; reject anything else as invalid
 
@@ -352,11 +347,33 @@ load_code
 			call assert_eos						; end of statement must happen now
 				; now handle full LOAD "filename"CODE start,length form
 
+load_code_two_args
 			call search_tape_header		; read tape headers until we get one that matches
 			ld e,(ix+0x1c)						; recall length from 'expected' buffer
 			ld d,(ix+0x1d)						; (which came from LOAD parameter)
 			ld c,(ix+0x1e)						; recall start address from 'expected' buffer
 			ld b,(ix+0x1f)						; (which came from LOAD parameter)
+			push bc										; set ix to start address
+			pop ix
+			jr load_code_datablock
+
+load_screen
+			pop ix										; retrieve buffer address
+			ld (ix+0x11),0x03					; set expected filetype to 3 = Bytes
+			rst consume								; consume the SCREEN$ token
+			call assert_eos						; this must be the end of the statement
+			ld (ix+0x1c),0x00					; set expected length to 0x1b00
+			ld (ix+0x1d),0x1b
+			ld (ix+0x1e),0x00					; set expected address to 0x4000
+			ld (ix+0x1f),0x40
+			jr load_code_two_args			; now continue as if we'd invoked
+																; LOAD "filename"CODE 16384,6912
+load_code_no_args
+			call search_tape_header		; read tape headers until we get one that matches
+			ld e,(ix+0x0b)						; read length from actual tape header
+			ld d,(ix+0x0c)
+			ld c,(ix+0x0d)						; read start address from actual tape header
+			ld b,(ix+0x0e)
 			push bc										; set ix to start address
 			pop ix
 			jr load_code_datablock
@@ -369,24 +386,48 @@ load_code_one_arg
 			ld b,(ix+0x1f)						; (which came from LOAD parameter)
 			push bc										; set ix to start address
 			pop ix
-			jr load_code_datablock
-
-load_code_no_args
-			call search_tape_header		; read tape headers until we get one that matches
-			ld e,(ix+0x0b)						; read length from actual tape header
-			ld d,(ix+0x0c)
-			ld c,(ix+0x0d)						; read start address from actual tape header
-			ld b,(ix+0x0e)
-			push bc										; set ix to start address
-			pop ix
 load_code_datablock
 			ld a,0xff									; 0xff = load datablock
 			scf												; carry set = load (not verify)
-			jp load_bytes							; load data block and return to interpreter
-			
+			call load_bytes						; load data block
+			jr nc,report_loading_error
+			ret
+
+report_loading_error
+			rst error
+			db 0x1a			; code for loading error
+
 load_basic
 			pop ix										; retrieve buffer address
 			ld (ix+0x11),0x00					; set expected filetype to 0 = Program
-			; TODO: implement loading BASIC
-			; (just move stuff from startup.asm here, basically)
-			rst fatal_error
+			call search_tape_header		; read tape headers until we get one that matches
+			; Read the BASIC header and make room for the incoming program
+			ld e,(ix+0x0d)					; get LINE number
+			ld d,(ix+0x0e)
+			push de
+			ld hl,prog_mem
+			push hl
+			ld e,(ix+0x0f)					; get BASIC length
+			ld d,(ix+0x10)
+			add hl,de
+			ld (vars_addr),hl				; store position of variables table
+			pop hl							; recall prog_mem
+			push hl
+			ld e,(ix+0x0b)					; get full data length
+			ld d,(ix+0x0c)
+			add hl,de						; find new location of spare memory
+			; TODO: compare with RAMTOP and complain if RAMTOP too low
+			ld (calc_stack),hl				; set new spare mem location
+			ld (calc_stack_end),hl
+			pop ix							; recall prog_mem again
+			ld a,0xff						; a=0xff for data block
+			scf								; carry set for load
+			call load_bytes
+			jr nc,report_loading_error
+			pop bc
+			jp goto_bc						; jump to LINE number
+				; - this will happen even if a LINE number wasn't set, since in
+				; that situation the bytes will come in as something >= 32768,
+				; and for any non-diabolically-hacked program GO TO 32768 will
+				; result in an immediate 'program finished', which is what we want.
+			; From goto_bc we launch straight into the main interpreter loop.

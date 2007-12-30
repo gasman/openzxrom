@@ -27,7 +27,7 @@
 ; RST 0x0000: here's where it all begins
 			di
 			im 1
-			ei
+			; don't re-enable interrupts until we're sure that SP is somewhere sensible
 			jr cold_start
 			
 			fillto 0x0008
