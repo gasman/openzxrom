@@ -64,6 +64,8 @@ fillto		macro addr
 			include "graphics.asm"
 ; 0x2ab6: Floating-point calculator routines
 			include "calculator.asm"
+; Error diagnostics
+			include "diagnostics.asm"
 ; ---------------
 splash_text
 			include "splash_screen.asm"

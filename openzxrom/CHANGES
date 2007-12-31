@@ -1,4 +1,4 @@
-OpenZXRom 200x-xx-xx
+OpenZXRom 2007-12-31
 - Routine to allocate arbitrary space in memory ('alloc_space')
 - LOAD command implemented ('cmd_load') (except DATA)
 - 'cmd_border' moved to 0x2298 to provide 'set_border' entry point at 0x229b
@@ -7,13 +7,16 @@ OpenZXRom 200x-xx-xx
 - Character printing supports flash / bright controls (CHR$ 18 and 19)
 - Character printing supports user-defined graphics
 - Implemented 'border_colour' system variable to preserve border colour after
-	tape loading
+  tape loading
+- Fatal errors now output diagnostic messages
 - Bugfix: parameter to CLEAR is not lost during call to clear_screen
 - Bugfix: 'consume' (RST 0x0020) no longer wraps interp_ptr at 256b boundaries
 - Bugfix: 'skip_whitespace' now gets parameterless and one-parameter control
   codes the right way round
 - Bugfix: IM1 interrupt service routine doesn't screw with flags
 - Bugfix: 'get_string_expr' logic reversed to not reject string expressions
+- Bugfix: 'skip_whitespace' does not skip over byte 0x0e (allowing a
+  parameterless BIN to be consumed)
 
 OpenZXRom 2007-10-15
 - calc_pop_bc and calc_pop_a now handle floating point values

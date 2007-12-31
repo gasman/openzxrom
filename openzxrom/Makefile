@@ -23,7 +23,7 @@
 # Postal address: 14 Daisy Hill Drive, Adlington, Chorley,
 #                 Lancs, PR6 9NE, United Kingdom
 
-openzxrom.bin: rom.asm restarts.asm startup.asm printing.asm keyboard.asm interpreter.asm cassette.asm clear_screen.asm errors.asm memory.asm expressions.asm functions.asm commands.asm print_string.asm graphics.asm calculator.asm splash_screen.asm clairsys.bin
+openzxrom.bin: rom.asm restarts.asm startup.asm printing.asm keyboard.asm interpreter.asm cassette.asm clear_screen.asm errors.asm memory.asm expressions.asm functions.asm commands.asm print_string.asm graphics.asm calculator.asm diagnostics.asm splash_screen.asm clairsys.bin
 	pasmo rom.asm openzxrom.bin openzxrom.sym
 
 clean:

@@ -43,7 +43,7 @@ putchar_main
 			cp 0x17							; is this a TAB x coordinate?
 			jr z,putchar_tab
 			; TODO: handle other control codes
-			rst fatal_error	; other control codes not supported yet
+			jp error_unprintable	; other control codes not supported yet
 
 putchar_ink
 			; set temporary ink colour as specified in l
@@ -231,6 +231,6 @@ copy_char_bitmap_lp
 			ret
 
 putchar_keyword
-			rst fatal_error		; TODO: implement keyword printing
+			jp error_unprintable		; TODO: implement keyword printing
 putchar_block_graphic
-			rst fatal_error		; TODO: implement block graphic printing
+			jp error_unprintable		; TODO: implement block graphic printing

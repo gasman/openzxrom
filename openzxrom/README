@@ -34,20 +34,23 @@ substitute for the original Sinclair ROM.
 
 * How compatible can we get?
 
-At present we do not propose to create a 100% work-alike of the original ROM
-complete with Basic programming environment. 100% compatibility will never be
-attainable anyway; the pathological case would be a program which performs a
-byte checksum of the ROM. Instead, we will initially focus on the most common
-entry points used by machine-code programs for tasks such as text printing and
-keyboard scanning. Amongst games in particular, it is reasonable to expect
-something like a 90:10 rule - 90% of games will work with only 10% of the ROM's
-feature set implemented. By way of an example, OpenZXRom is already able to run
-Manic Miner simply by virtue of providing a font.
+Certainly not 100%... having a complete Basic programming environment is a long
+way off. (True 100% compatibility will never be attainable anyway; the
+pathological case would be a program which performs a byte checksum of the ROM.)
+The current development centres around two goals:
+1) Implementing the most common entry points used by machine-code programs;
+   these include text printing, keyboard scanning and floating point maths.
+2) Implementing enough of a Basic interpreter to run a typical bootstrap loader,
+   to allow machine code programs to be loaded from tape.
 
-An extra complication comes when we want to load games from tape, as this will
-entail incorporating a limited Basic interpreter to run the bootstrap loader.
-Initially this might only support a small subset of commands, such as CLEAR,
-LOAD and USR.
+For 1), we might expect something like a 90:10 rule, particularly for games: 90%
+of games will work with only 10% of the ROM's feature set implemented. Often (as
+in the case of Manic Miner) simply providing a font is enough. 2) is rather more
+taxing, as even a short Basic stub may turn out to use all sorts of language
+features. Nevertheless, the most common commands (CLEAR, LOAD, USR) are now
+supported, and this is enough to get a small but growing number of titles
+working correctly. See the STATUS document for the current list of supported
+features.
 
 Of course, the real Sinclair ROMs will continue to be readily downloadable under
 Amstrad's not-free-but-usually-good-enough licence for the forseeable future, so
@@ -57,14 +60,12 @@ receive their emulator without those ROMs bundled.
 * Is this a clean-room implementation?
 
 Not really. I (and doubtless anyone else likely to be working on this project)
-have seen the Spectrum ROM disassembly, and will refer to it where appropriate
-to decide what the correct behaviour is at particular points; so in the unlikely
-event that it does turn out to have large chunks of code in common with the
-Spectrum ROM, Amstrad will have a good case for claiming copyright infringement.
-(And that's the point where we start thinking about a proper clean-room approach
-for the offending code...) Developers should at least adopt a policy of not
-consulting the disassembly simply to find out the best way to code a particular
-routine.
+have a fair bit of experience working with the original ROM routines, and access
+to Logan & O'Hara's "The Complete Spectrum ROM Disassembly", which I've made
+frequent use of on this project. I've generally concentrated on the commentary
+though, only consulting the actual ROM code when absolutely necessary, and
+certainly not in order to figure out the best way of doing things. I'd advise
+any other contributors to take the same approach.
 
 In practice, the differing design goals and priorities between this ROM and
 Sinclair's will tend towards producing different code; for example, in our
@@ -79,6 +80,11 @@ line:
 
 fuse --rom-48 openzxrom.bin --machine 48
 
+On a 128K machine, you'll get best results from placing the same ROM image in
+both slots, so that it's always available regardless of the current paging:
+
+fuse --rom-128-0 openzxrom.bin --rom-128-1 openzxrom.bin --machine 128
+
 However, this is probably a case of "if you're the sort of person to be
 interested in this project in the first place, you probably know how to do it
 already". Once this project properly gets off the ground and is supplied as the
@@ -89,7 +95,35 @@ to switch away from it instead :-)
 
 'make'.
 You'll need Pasmo <http://www.arrakis.es/~ninsesabe/pasmo/> to assemble it -
-tested with version 0.5.2, but earlier versions may work.
+tested with version 0.5.3, but earlier versions may work.
+
+* Error messages
+
+Some programs may stop with diagnostic error messages, indicated by a striped
+red and yellow border. These are more likely to indicate missing features of
+the ROM rather than errors in the running program:
+"Here be dragons: 0xnnnn"
+- The running program has made a call to an empty area of the ROM, at the
+  address shown. Most likely, this is a call to a routine that hasn't been
+  implemented yet.
+"Unsupported BASIC command: 0xnn"
+- The Basic interpreter has encountered an unimplemented Basic command. The
+  hex code is the ASCII code of the offending keyword token.
+"Unsupported function: 0xnn"
+- As above, but for a function call within a Basic line.
+"Syntax error at: 0xnnnn"
+- An unexpected character was encountered while interpreting a Basic command.
+  This may be a genuine syntax error, or a variant of a partly-implemented
+  language feature which is not yet supported (e.g. the LOAD "" DATA form of
+  LOAD ""). The address indicates the portion of ROM code which encountered the
+  syntax error.
+"Unprintable character: 0xnn"
+- The text printing routine has encountered a character for which printing is
+  not yet implemented; this currently includes keyword tokens and block
+  graphics. The hex code is the ASCII code of the offending character.
+"Unsupported calculator op: 0xnn"
+- The floating point calculator routine (RST 0x0028) was invoked with an
+  instruction code (indicated by the hex code) which is not yet implemented.
 
 
 Matthew Westcott <matthew@west.co.tt>

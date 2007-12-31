@@ -61,7 +61,9 @@ calc			pop hl
 ; Arrive here if we execute any undefined area of the ROM
 fatal_error
 			di
-			jp fatal_error_main
+			pop hl						; recover return address
+			dec hl						; decrement to give the location of the fatal RST 0x0030 call
+			jp error_here_be_dragons	; jump to error reporting routine
 			
 			fillto 0x0038
 ; RST 0x0038: IM 1 interrupt service routine
@@ -80,11 +82,3 @@ done_frames
 			pop af
 			ei
 			ret
-
-fatal_error_main
-fatal_error_lp
-			ld a,6
-			out (254),a
-			ld a,3
-			out (254),a
-			jr fatal_error_lp

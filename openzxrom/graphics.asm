@@ -102,7 +102,7 @@ cmd_plot
 			push af
 			rst nextchar
 			cp ','						; ensure that a comma follows
-			jp nz,fatal_error
+			call nz,syntax_error
 			rst consume
 			call consume_a		; fetch Y coordinate
 			push af

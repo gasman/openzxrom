@@ -25,10 +25,10 @@
 
 get_num_expr
 ; read a number expression from interp_ptr and leave it pushed on the calculator stack.
-; Triggers a fatal error if expression is missing or not numeric
+; Triggers a syntax error if expression is missing or not numeric
 			call get_expr			; just wrap get_expr with error checking
-			jp c,fatal_error	; trigger error if expression missing
-			jp nz,fatal_error	; trigger error if expression non-numeric
+			jp c,syntax_error	; trigger error if expression missing
+			jp nz,syntax_error	; trigger error if expression non-numeric
 			ret
 
 get_num_expr_8
@@ -36,16 +36,16 @@ get_num_expr_8
 ; numeric functions except for NOT) from interp_ptr and leave it pushed on the calculator stack.
 ; Triggers a fatal error if expression is missing or not numeric
 			call get_expr_8			; just wrap get_expr with error checking
-			jp c,fatal_error	; trigger error if expression missing
-			jp nz,fatal_error	; trigger error if expression non-numeric
+			jp c,syntax_error	; trigger error if expression missing
+			jp nz,syntax_error	; trigger error if expression non-numeric
 			ret
 
 get_string_expr
 ; read a number expression from interp_ptr and leave it pushed on the calculator stack.
 ; Triggers a fatal error if expression is missing or not string
 			call get_expr			; just wrap get_expr with error checking
-			jp c,fatal_error	; trigger error if expression missing
-			jp z,fatal_error	; trigger error if expression non-string
+			jp c,syntax_error	; trigger error if expression missing
+			jp z,syntax_error	; trigger error if expression non-string
 			ret
 			
 get_expr
@@ -65,8 +65,8 @@ num_or
 ; handle the rest of the OR expression
 			rst consume					; consume the OR token
 			call get_expr_2			; get right operand
-			jp c,fatal_error			; syntax error if no expr found
-			jp nz,fatal_error			; syntax error if operand is a string
+			call c,syntax_error	; syntax error if no expr found
+			call nz,syntax_error	; syntax error if operand is a string
 			; FIXME: perform OR op here
 			jr search_num_or			; return to look for further ORs
 			
@@ -93,16 +93,16 @@ search_str_and
 num_and
 			rst consume					; consume the AND token
 			call get_expr_4			; get right operand
-			jp c,fatal_error			; syntax error if no expr found
-			jp nz,fatal_error			; syntax error if right operand is a string
+			call c,syntax_error		; syntax error if no expr found
+			call nz,syntax_error	; syntax error if right operand is a string
 			; FIXME: perform numeric AND op here
 			jr search_num_and			; look for additional ANDs
 
 str_and
 			rst consume					; consume the AND token
 			call get_expr_4			; get right operand
-			jp c,fatal_error			; syntax error if no num_expr found
-			jp nz,fatal_error			; syntax error if right operand is a string
+			call c,syntax_error			; syntax error if no num_expr found
+			call nz,syntax_error		; syntax error if right operand is a string
 			; FIXME: perform string AND op here
 			jr search_str_and			; look for additional ANDs
 
@@ -208,14 +208,14 @@ str_not_equal
 get_num_comparator_operand
 			rst consume				; consume the operator token
 			call get_expr_5		; get right-hand expression
-			jp c,fatal_error	; die if it's missing
-			jp nz,fatal_error	; die if it isn't numeric
+			call c,syntax_error	; die if it's missing
+			call nz,syntax_error	; die if it isn't numeric
 			ret
 get_str_comparator_operand
 			rst consume				; consume the operator token
 			call get_expr_5		; get right-hand expression
-			jp c,fatal_error	; die if it's missing
-			jp z,fatal_error	; die if it isn't string
+			call c,syntax_error	; die if it's missing
+			call z,syntax_error	; die if it isn't string
 			ret
 
 get_expr_5
@@ -242,24 +242,24 @@ search_str_sum_op
 num_plus
 			rst consume							; consume + token
 			call get_expr_6					; fetch right-hand expression
-			jp c,fatal_error				; die if right-hand expression is missing
-			jp nz,fatal_error				; die if right-hand expression is a string
+			call c,syntax_error				; die if right-hand expression is missing
+			call nz,syntax_error				; die if right-hand expression is a string
 			; FIXME: perform + op here
 			jr search_num_sum_op
 			
 num_minus
 			rst consume							; consume - token
 			call get_expr_6					; fetch right-hand expression
-			jp c,fatal_error				; die if right-hand expression is missing
-			jp nz,fatal_error				; die if right-hand expression is a string			
+			call c,syntax_error				; die if right-hand expression is missing
+			call nz,syntax_error				; die if right-hand expression is a string			
 			; FIXME: perform - op here
 			jr search_num_sum_op
 
 str_concat
 			rst consume							; consume + token
 			call get_expr_6					; fetch right-hand expression
-			jp c,fatal_error				; die if right-hand expression is missing
-			jp z,fatal_error				; die if right-hand expression is numeric			
+			call c,syntax_error				; die if right-hand expression is missing
+			call z,syntax_error				; die if right-hand expression is numeric			
 			; FIXME: perform + (concat) op here
 			jr search_str_sum_op
 
@@ -282,15 +282,15 @@ search_num_product
 num_multiply
 			rst consume
 			call get_expr_7
-			jp c,fatal_error
-			jp nz,fatal_error
+			call c,syntax_error
+			call nz,syntax_error
 			; FIXME: perform * op here
 			jr search_num_product
 num_divide
 			rst consume
 			call get_expr_7
-			jp c,fatal_error
-			jp nz,fatal_error
+			call c,syntax_error
+			call nz,syntax_error
 			; FIXME: perform / op here
 			jr search_num_product
 			
@@ -308,8 +308,8 @@ search_num_power
 num_power
 			rst consume
 			call get_expr_8
-			jp c,fatal_error
-			jp nz,fatal_error
+			call c,syntax_error
+			call nz,syntax_error
 			; FIXME: perform ^ op here
 			jr search_num_power
 			
@@ -339,7 +339,7 @@ get_expr_8
 			cp '9'+1
 			jr c,get_num_literal
 				; TODO: grok variable names
-				; For now treat everything else under 0xa5 as a 
+				; For now treat everything else under 0xa5 as an end-of-expression
 			sub 0xa5
 			ret c
 			cp 0x20					; anything >= 0xc5 is invalid (marks a missing expression)
@@ -361,15 +361,15 @@ return_missing_expr
 
 get_bracketed
 			rst consume				; consume left bracket
-			call get_expr		; evaluate everything within brackets
-			jp c,fatal_error	; die if no expression found
+			call get_expr			; evaluate everything within brackets
+			call c,syntax_error	; die if no expression found
 			push af						; remember zero flag (which indicates whether bracketed expression
 												; is numeric or string
 			rst nextchar			; Next char must be ')', or else
-			cp ')'					; it will make baby Jesus cry
-			jp nz,fatal_error
+			cp ')'						; it will make baby Jesus cry
+			call nz,syntax_error
 											; NOTE: this leaves AF on stack; we'll want to pop this before jumping
-											; to fatal_error, if and when we ever implement recovery from 'fatal' errors
+											; to syntax_error, if and when we ever implement recovery from 'fatal' errors
 			rst consume			; consume right bracket
 			pop af					; recall zero/carry flags for return code
 			ret
@@ -377,8 +377,8 @@ get_bracketed
 get_num_unary_minus
 			rst consume
 			call get_expr_8
-			jp c, fatal_error
-			jp nz,fatal_error
+			call c, syntax_error
+			call nz,syntax_error
 			; FIXME: perform unary minus op here
 			xor a								; signal successful fetch of numeric expression (carry reset, zero set)
 			ret

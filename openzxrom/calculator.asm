@@ -184,7 +184,7 @@ calc_main
 			inc hl
 			cp 0x38
 			jr z,calc_op_end_calc
-			jp nc,fatal_error	; we don't handle anything above 0x38 for now
+			jp nc,error_calc_op	; we don't handle anything above 0x38 for now
 				; TODO: handle calc opcodes >0x38
 			push hl
 			ld l,a		; translate instruction code into address in jump table
@@ -203,68 +203,68 @@ calc_op_end_calc
 			jp (hl)						; return to next address after instruction stream
 			
 ; jump table for calculator opcodes
-; jumps to fatal_error where opcode is unimplemented / undefined
+; jumps to error_calc_op where opcode is unimplemented / undefined
 calc_op_table
-			dw fatal_error
-			dw fatal_error	; 01 = exchange
-			dw fatal_error	; 02 = delete
-			dw fatal_error	; 03 = subtract
-			dw fatal_error	; 04 = multiply
-			dw fatal_error	; 05 = divide
-			dw fatal_error	; 06 = power
-			dw fatal_error	;
-			dw fatal_error	;
-			dw fatal_error	;
-			dw fatal_error	;
-			dw fatal_error	;
-			dw fatal_error	;
-			dw fatal_error	;
-			dw fatal_error	;
-			dw fatal_error	; 0f = add
-			dw fatal_error	;
-			dw fatal_error	;
-			dw fatal_error	;
-			dw fatal_error	;
-			dw fatal_error	;
-			dw fatal_error	;
-			dw fatal_error	;
-			dw fatal_error	; 17 = s_add
-			dw fatal_error	; 18 = val$
+			dw error_calc_op
+			dw error_calc_op	; 01 = exchange
+			dw error_calc_op	; 02 = delete
+			dw error_calc_op	; 03 = subtract
+			dw error_calc_op	; 04 = multiply
+			dw error_calc_op	; 05 = divide
+			dw error_calc_op	; 06 = power
+			dw error_calc_op	;
+			dw error_calc_op	;
+			dw error_calc_op	;
+			dw error_calc_op	;
+			dw error_calc_op	;
+			dw error_calc_op	;
+			dw error_calc_op	;
+			dw error_calc_op	;
+			dw error_calc_op	; 0f = add
+			dw error_calc_op	;
+			dw error_calc_op	;
+			dw error_calc_op	;
+			dw error_calc_op	;
+			dw error_calc_op	;
+			dw error_calc_op	;
+			dw error_calc_op	;
+			dw error_calc_op	; 17 = s_add
+			dw error_calc_op	; 18 = val$
 cc_usr_s	equ 0x19
-			dw fatal_error	; 19 = usr_s
-			dw fatal_error	; 
-			dw fatal_error	; 1b = negate
-			dw fatal_error	; 1c = code
-			dw fatal_error	; 1d = val
-			dw fatal_error	; 1e = len
-			dw fatal_error	; 1f = sin
-			dw fatal_error	; 20 = cos
-			dw fatal_error	; 21 = tan
-			dw fatal_error	; 22 = asn
-			dw fatal_error	; 23 = acs
-			dw fatal_error	; 24 = atn
-			dw fatal_error	; 25 = ln
-			dw fatal_error	; 26 = exp
-			dw fatal_error	; 27 = int
-			dw fatal_error	; 28 = sqr
-			dw fatal_error	; 29 = sgn
-			dw fatal_error	; 2a = abs
+			dw error_calc_op	; 19 = usr_s
+			dw error_calc_op	; 
+			dw error_calc_op	; 1b = negate
+			dw error_calc_op	; 1c = code
+			dw error_calc_op	; 1d = val
+			dw error_calc_op	; 1e = len
+			dw error_calc_op	; 1f = sin
+			dw error_calc_op	; 20 = cos
+			dw error_calc_op	; 21 = tan
+			dw error_calc_op	; 22 = asn
+			dw error_calc_op	; 23 = acs
+			dw error_calc_op	; 24 = atn
+			dw error_calc_op	; 25 = ln
+			dw error_calc_op	; 26 = exp
+			dw error_calc_op	; 27 = int
+			dw error_calc_op	; 28 = sqr
+			dw error_calc_op	; 29 = sgn
+			dw error_calc_op	; 2a = abs
 cc_peek		equ 0x2b
 			dw calcop_peek	; 2b = peek
 cc_in			equ 0x2c
 			dw calcop_in		; 2c = in
 cc_usr_n	equ 0x2d
 			dw calcop_usr_n	; 2d = usr_n
-			dw fatal_error	; 2e = str$
-			dw fatal_error	; 2f = chr$
-			dw fatal_error	;
-			dw fatal_error	; 31 = duplicate
-			dw fatal_error	;
-			dw fatal_error	;
-			dw fatal_error	;
-			dw fatal_error	;
-			dw fatal_error	;
-			dw fatal_error	;
+			dw error_calc_op	; 2e = str$
+			dw error_calc_op	; 2f = chr$
+			dw error_calc_op	;
+			dw error_calc_op	; 31 = duplicate
+			dw error_calc_op	;
+			dw error_calc_op	;
+			dw error_calc_op	;
+			dw error_calc_op	;
+			dw error_calc_op	;
+			dw error_calc_op	;
 cc_endcalc	equ 0x38
 
 ; ---------------			

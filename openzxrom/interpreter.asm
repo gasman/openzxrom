@@ -50,6 +50,7 @@ interp_new_line
 
 interp
 ; This entry point will start interpreting from interp_ptr
+			call skip_whitespace
 			rst nextchar
 			cp 0x0d							; if next char a new line, jump to next
 			jr z,interp_new_line			; via interp_new_line
@@ -82,7 +83,7 @@ interp_invalid
 			; equivalent to 'nonsense in basic', but we'll do our standard
 			; crash-and-burn thing instead to prompt us to do a post-mortem
 			; and see if it's actually something valid that I forgot to handle...
-			rst fatal_error
+			call syntax_error
 			
 			
 ; ---------------
@@ -90,7 +91,8 @@ assert_eos
 ; assert that the next character at interp_ptr is an end-of-statement character; die if not
 			call nextchar_is_eos
 			ret z
-			jp nz,fatal_error
+			jp nz,syntax_error	; JP rather than CALL so that diagnostics will report the address
+													; assert_eos was called from
 
 nextchar_is_eos
 			rst nextchar
@@ -109,12 +111,14 @@ consume_main
 			inc hl
 			ld (interp_ptr),hl
 skip_whitespace
-; Advance interp_ptr past any ignorable characters: space and control codes other than 0x0d
+; Advance interp_ptr past any ignorable characters: space and control codes other than 0x0d and 0x0e
 			push af
 			ld hl,(interp_ptr)
 skip_whitespace_lp
 			ld a,(hl)
 			cp 0x0d
+			jr z,skip_whitespace_done
+			cp 0x0e
 			jr z,skip_whitespace_done
 			cp 0x21
 			jr nc,skip_whitespace_done	; code >= 0x21, so OK to return

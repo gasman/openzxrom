@@ -25,38 +25,38 @@
 
 num_func_table
 ; vector table of numeric function handlers
-; dw fatal_error = not implemented yet, or invalid (e.g. AT - not a function)
-			dw fatal_error			; RND
-			dw fatal_error			; INKEY$
-			dw fatal_error			; PI
-			dw fatal_error			; FN
-			dw fatal_error			; POINT
-			dw fatal_error			; SCREEN$
-			dw fatal_error			; ATTR
-			dw fatal_error			; AT
-			dw fatal_error			; TAB
-			dw fatal_error			; VAL$
-			dw fatal_error			; CODE
-			dw fatal_error			; VAL
-			dw fatal_error			; LEN
-			dw fatal_error			; SIN
-			dw fatal_error			; COS
-			dw fatal_error			; TAN
-			dw fatal_error			; ASN
-			dw fatal_error			; ACS
-			dw fatal_error			; ATN
-			dw fatal_error			; LN
-			dw fatal_error			; EXP
-			dw fatal_error			; INT
-			dw fatal_error			; SQR
-			dw fatal_error			; SGN
-			dw fatal_error			; ABS
+; dw error_function = not implemented yet, or invalid (e.g. AT - not a function)
+			dw error_function			; RND
+			dw error_function			; INKEY$
+			dw error_function			; PI
+			dw error_function			; FN
+			dw error_function			; POINT
+			dw error_function			; SCREEN$
+			dw error_function			; ATTR
+			dw error_function			; AT
+			dw error_function			; TAB
+			dw error_function			; VAL$
+			dw error_function			; CODE
+			dw error_function			; VAL
+			dw error_function			; LEN
+			dw error_function			; SIN
+			dw error_function			; COS
+			dw error_function			; TAN
+			dw error_function			; ASN
+			dw error_function			; ACS
+			dw error_function			; ATN
+			dw error_function			; LN
+			dw error_function			; EXP
+			dw error_function			; INT
+			dw error_function			; SQR
+			dw error_function			; SGN
+			dw error_function			; ABS
 			dw func_peek				; PEEK
 			dw func_in					; IN
 			dw func_usr					; USR
-			dw fatal_error			; STR$
-			dw fatal_error			; CHR$
-			dw fatal_error			; NOT
+			dw error_function			; STR$
+			dw error_function			; CHR$
+			dw error_function			; NOT
 			dw get_num_literal		; BIN (not really a function -
 										; signifies that a literal is coming)
 
@@ -82,7 +82,7 @@ func_in
 func_usr
 ; USR function
 			call get_expr_8		; retrieve expression, which may be string or numeric
-			jp c,fatal_error	; die if expression is missing
+			call c,syntax_error	; die if expression is missing
 			jr nz,func_usr_str	; jump to func_usr_str if expression is a string
 			rst calc
 			db cc_usr_n

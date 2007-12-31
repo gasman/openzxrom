@@ -24,57 +24,57 @@
 ;                 Lancs, PR6 9NE, United Kingdom
 
 command_table
-; Where commands are unimplemented, they are set as a pointer to fatal_error
-			dw fatal_error	; DEF FN
-			dw fatal_error	; CAT
-			dw fatal_error	; FORMAT
-			dw fatal_error	; MOVE
-			dw fatal_error	; ERASE
-			dw fatal_error	; OPEN #
-			dw fatal_error	; CLOSE #
-			dw fatal_error	; MERGE
-			dw fatal_error	; VERIFY
-			dw fatal_error	; BEEP
-			dw fatal_error	; CIRCLE
+; Where commands are unimplemented, they are set as a pointer to error_command
+			dw error_command	; DEF FN
+			dw error_command	; CAT
+			dw error_command	; FORMAT
+			dw error_command	; MOVE
+			dw error_command	; ERASE
+			dw error_command	; OPEN #
+			dw error_command	; CLOSE #
+			dw error_command	; MERGE
+			dw error_command	; VERIFY
+			dw error_command	; BEEP
+			dw error_command	; CIRCLE
 			dw cmd_ink		; INK
 			dw cmd_paper	; PAPER
-			dw fatal_error	; FLASH
-			dw fatal_error	; BRIGHT
-			dw fatal_error	; INVERSE
-			dw fatal_error	; OVER
+			dw error_command	; FLASH
+			dw error_command	; BRIGHT
+			dw error_command	; INVERSE
+			dw error_command	; OVER
 			dw cmd_out		; OUT
-			dw fatal_error	; LPRINT
-			dw fatal_error	; LLIST
+			dw error_command	; LPRINT
+			dw error_command	; LLIST
 			dw cmd_stop		; STOP
-			dw fatal_error	; READ
-			dw fatal_error	; DATA
-			dw fatal_error	; RESTORE
+			dw error_command	; READ
+			dw error_command	; DATA
+			dw error_command	; RESTORE
 			dw cmd_new		; NEW
 			dw cmd_border	; BORDER
-			dw fatal_error	; CONTINUE
-			dw fatal_error	; DIM
+			dw error_command	; CONTINUE
+			dw error_command	; DIM
 			dw cmd_rem		; REM
-			dw fatal_error	; FOR
+			dw error_command	; FOR
 			dw cmd_goto		; GO TO
-			dw fatal_error	; GO SUB
-			dw fatal_error	; INPUT
+			dw error_command	; GO SUB
+			dw error_command	; INPUT
 			dw cmd_load	; LOAD
-			dw fatal_error	; LIST
-			dw fatal_error	; LET
-			dw fatal_error	; PAUSE
-			dw fatal_error	; NEXT
+			dw error_command	; LIST
+			dw error_command	; LET
+			dw error_command	; PAUSE
+			dw error_command	; NEXT
 			dw cmd_poke		; POKE
-			dw fatal_error	; PRINT
+			dw error_command	; PRINT
 			dw cmd_plot		; PLOT
 			dw cmd_run		; RUN
-			dw fatal_error	; SAVE
+			dw error_command	; SAVE
 			dw cmd_randomize	; RANDOMIZE
-			dw fatal_error	; IF
+			dw error_command	; IF
 			dw cmd_cls		; CLS
-			dw fatal_error	; DRAW
+			dw error_command	; DRAW
 			dw cmd_clear	; CLEAR
-			dw fatal_error	; RETURN
-			dw fatal_error	; COPY
+			dw error_command	; RETURN
+			dw error_command	; COPY
 
 cmd_rem
 ; process REM command
@@ -163,7 +163,7 @@ cmd_clear
 ; process CLEAR command
 			call get_expr								; look for optional argument
 			jr c,cmd_clear_no_arg			; if not present, just perform stock CLEAR actions (clear screen and vars)
-			jp nz,fatal_error					; die if argument is a string
+			call nz,syntax_error				; die if argument is a string
 			call assert_eos						; die if expression is not followed by end of statement
 			call calc_pop_bc_validate		; pop argument into bc, ensuring that it's positive and within 16 bits
 			push bc
@@ -199,7 +199,7 @@ cmd_run
 			call vanilla_clear					; do stock CLEAR actions
 			call get_expr							; fetch optional argument
 			jr c,run_no_arg						; if none found, go to line 0
-			jp nz,fatal_error					; die if it's a string rather than a number
+			call nz,syntax_error			; die if it's a string rather than a number
 			call assert_eos						; ensure end-of-statement follows argument
 			call calc_pop_bc_validate	; retrieve argument into bc, ensuring it's
 			jp goto_bc								; within 0<=bc<=0xffff
@@ -211,8 +211,8 @@ run_no_arg
 cmd_randomize
 ; process RANDOMIZE command
 			call get_expr						; look for optional argument
-			jr c,randomize_frames				; if none supplied, use FRAMES
-			jp nz,fatal_error				; die if it's a string rather than numeric
+			jr c,randomize_frames			; if none supplied, use FRAMES
+			call nz,syntax_error			; die if it's a string rather than numeric
 			call assert_eos						; ensure end-of-statement follows argument
 			call calc_pop_bc_validate		; if one supplied, check it's within 0<=bc<=0xffff
 			ld a,b								; check if it's 0
@@ -231,7 +231,7 @@ cmd_poke
 			push bc
 			rst nextchar							; confirm that next char is a comma
 			cp ','
-			jp nz,fatal_error
+			call nz,syntax_error
 			rst consume								; consume the comma
 			call consume_a						; fetch byte argument
 			push af
@@ -247,7 +247,7 @@ cmd_out
 			push bc
 			rst nextchar							; confirm that next char is a comma
 			cp ','
-			jp nz,fatal_error
+			call nz,syntax_error
 			rst consume								; consume the comma
 			call consume_a						; fetch byte argument
 			push af
@@ -317,8 +317,8 @@ filename_copied
 			jr z,load_code
 			cp 0xaa										; check if it's SCREEN$
 			jr z,load_screen
-			; TODO: grok DATA and SCREEN$
-			rst fatal_error						; reject anything else as invalid
+			; TODO: grok DATA
+			call syntax_error						; reject anything else as invalid
 
 load_code
 			pop ix										; retrieve buffer address
@@ -336,7 +336,7 @@ load_code
 			call nextchar_is_eos			; end of statement now?
 			jr z,load_code_one_arg		; if so, treat as LOAD "filename"CODE start
 			cp ','										; otherwise, it must be ','
-			jp nz,fatal_error					; or else it's invalid
+			call nz,syntax_error			; or else it's invalid
 			rst consume								; consume the comma
 			push ix
 			call consume_bc						; fetch CODE length into bc
