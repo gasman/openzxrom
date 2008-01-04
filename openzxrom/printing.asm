@@ -61,22 +61,16 @@ putchar_paper
 			
 putchar_flash
 			; set temporary FLASH attribute as specified in l
-			; TODO: check for overflow and handle FLASH 8
-			rrca
-			ld a,(temp_attribute)
-			and 0x7f						; strip out previous FLASH bit
-			jr write_temp_attribute
-
+			ld a,l							; put argument back into A
+			ld ix,temp_attribute	; point set_flash routine at temporary attributes
+			call set_flash_safe			; call set_flash, bypassing negative number test
+			jr putchar_colour_done
+			
 putchar_bright
 			; set temporary BRIGHT attribute as specified in l
-			; TODO: check for overflow and handle BRIGHT 8
-			rrca
-			rrca
-			ld a,(temp_attribute)
-			and 0xbf						; strip out previous BRIGHT bit
-write_temp_attribute
-			or l								; merge bits from l into new attribute
-			ld (temp_attribute),a	; write back to temp_attribute
+			ld a,l							; put argument back into A
+			ld ix,temp_attribute	; point set_bright routine at temporary attributes
+			call set_bright_safe			; call set_bright, bypassing negative number test
 putchar_colour_done
 			xor a							; expect ordinary char in next call
 			ld (next_char_type),a			; to putchar

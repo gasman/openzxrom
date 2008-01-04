@@ -13,9 +13,8 @@ routines in the ZX ROM.
 
 0x0010: Print a character
 	Character classes supported: Comma control (0x06), Newline (0x0d), INK/PAPER
-	controls, FLASH / BRIGHT controls (except 'transparent' setting), AT and TAB
-	controls, standard characters (0x20-0x7f; includes customised fonts),
-	user-defined graphics.
+	controls, FLASH / BRIGHT controls, AT and TAB controls, standard characters
+	(0x20-0x7f; includes customised fonts), user-defined graphics.
 	Not supported: cursor / backspace controls, INVERSE / OVER controls, block
 	graphics, keyword tokens.
 	Does not handle scrolling upon reaching the bottom of the screen.
@@ -71,6 +70,8 @@ BASIC commands supported
 ------------------------
 	INK
 	PAPER
+	FLASH
+	BRIGHT
 	OUT
 	STOP
 	NEW
@@ -86,9 +87,8 @@ BASIC commands supported
 	CLEAR
 BASIC commands not supported:
 	DEF FN, CAT, FORMAT, MOVE, ERASE, OPEN #, CLOSE #, MERGE, VERIFY, BEEP, CIRCLE,
-	FLASH, BRIGHT, INVERSE, OVER, LPRINT, LLIST, READ, DATA, RESTORE, CONTINUE,
-	DIM, FOR, GO SUB, INPUT, LIST, LET, PAUSE, NEXT, PRINT, SAVE, IF, DRAW, RETURN,
-	COPY
+	INVERSE, OVER, LPRINT, LLIST, READ, DATA, RESTORE, CONTINUE, DIM, FOR, GO SUB,
+	INPUT, LIST, LET, PAUSE, NEXT, PRINT, SAVE, IF, DRAW, RETURN, COPY
 	
 Expression support
 ------------------

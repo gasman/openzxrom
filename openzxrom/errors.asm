@@ -34,6 +34,8 @@ print_err
 			ld e,(hl)
 			inc hl
 			ld d,(hl)
+			xor a									; ensure we don't try to print mid-control-code
+			ld (next_char_type),a
 			ld a,0x0d
 			rst putchar						; output leading newline
 print_err_lp

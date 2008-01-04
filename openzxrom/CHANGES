@@ -4,6 +4,8 @@ OpenZXRom 2008-xx-xx
   'last_key' system variable will now respond to keypresses
 - 'cmd_ink', 'cmd_paper' and 'putchar' routines support INK/PAPER 8
   (transparent) and 9 (contrast)
+- FLASH and BRIGHT commands implemented ('cmd_flash' / 'cmd_bright'), and
+  'putchar' updated to support FLASH/BRIGHT 8 (transparent)
 
 OpenZXRom 2007-12-31
 - Routine to allocate arbitrary space in memory ('alloc_space')

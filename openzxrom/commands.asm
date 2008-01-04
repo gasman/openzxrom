@@ -38,8 +38,8 @@ command_table
 			dw error_command	; CIRCLE
 			dw cmd_ink		; INK
 			dw cmd_paper	; PAPER
-			dw error_command	; FLASH
-			dw error_command	; BRIGHT
+			dw cmd_flash	; FLASH
+			dw cmd_bright	; BRIGHT
 			dw error_command	; INVERSE
 			dw error_command	; OVER
 			dw cmd_out		; OUT
@@ -119,6 +119,65 @@ goto_lp
 goto_found
 			ld (next_line_ptr),ix
 			jp interp_new_line
+
+cmd_bright
+; process BRIGHT command
+			call consume_a				; fetch parameter (expected to be 0, 1 or 8)
+			ld ix,perm_attribute	; tell set_bright to work with permanent_attributes
+			call set_bright
+			jp assert_eos					; return, while verifying that this is indeed the end of the statement
+
+; enter with af = BRIGHT parameter and validation flags as received from consume_a,
+; ix = pointer to perm_attribute or temp_attribute to indicate type of attribute to set
+set_bright
+			jr z,err_out_of_range	; reject immediately if consume_a returned a negative result
+set_bright_safe			; alternative entry point if we know argument isn't negative (i.e. from RST putchar)
+			cp 8
+			jr z,set_bright_transparent	; if bright 8, go to set transparent bright
+			srl a					; otherwise, it must be 1 or 0
+			jr nz,err_out_of_range
+			rra						; shift bright bit into bit 6
+			rra
+			ld b,a				; and store in b
+			ld a,(ix)			; get old attribute byte
+			and 0xbf			; strip out old bright bit
+			or b					; and merge in new one
+			ld (ix),a			; write attribute back
+			res 6,(ix+1)	; and set it as opaque in the attribute mask
+			ret
+set_bright_transparent
+			set 6,(ix+1)		; set bright bit of mask to transparent
+			res 6,(ix)			; reset bright bit of attribute
+			ret							; (so it'll be unchanged when we OR the attribute onto the screen)			
+
+cmd_flash
+; process FLASH command
+			call consume_a				; fetch parameter (expected to be 0, 1 or 8)
+			ld ix,perm_attribute	; tell set_flash to work with permanent_attributes
+			call set_flash
+			jp assert_eos					; return, while verifying that this is indeed the end of the statement
+
+; enter with af = FLASH parameter and validation flags as received from consume_a,
+; ix = pointer to perm_attribute or temp_attribute to indicate type of attribute to set
+set_flash
+			jr z,err_out_of_range	; reject immediately if consume_a returned a negative result
+set_flash_safe			; alternative entry point if we know argument isn't negative (i.e. from RST putchar)
+			cp 8
+			jr z,set_flash_transparent	; if flash 8, go to set transparent flash
+			srl a					; otherwise, it must be 1 or 0
+			jr nz,err_out_of_range
+			rra						; shift flash bit into bit 7
+			ld b,a				; and store in b
+			ld a,(ix)			; get old attribute byte
+			and 0x7f			; strip out old flash bit
+			or b					; and merge in new one
+			ld (ix),a			; write attribute back
+			res 7,(ix+1)	; and set it as opaque in the attribute mask
+			ret
+set_flash_transparent
+			set 7,(ix+1)		; set flash bit of mask to transparent
+			res 7,(ix)			; reset flash bit of attribute
+			ret							; (so it'll be unchanged when we OR the attribute onto the screen)			
 
 get_colour_arg
 ; fetch a numeric argument and ensure that it's a valid colour (0-7); return it in A
