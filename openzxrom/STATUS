@@ -24,9 +24,15 @@ routines in the ZX ROM.
 	Calculator opcodes supported: 0x2b (PEEK), 0x2c (IN), 0x2d (USR num)
 
 0x0038: IM1 interrupt service routine
-	Updates FRAMES system variable; no keyboard scanning.
+	Updates FRAMES and LAST_KEY system variables.
 
 0x028e: Keyboard scanning
+
+0x031e: Test for valid keypress
+
+0x0333: Decode keypress to ASCII code
+  Does not account for K/E/G cursor modes; only L and C (with and without
+  shifts).
 
 0x0556: Load bytes from tape
 	LOAD only, no VERIFY. Other addresses synchronised with ZX ROM behaviour are

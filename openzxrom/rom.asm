@@ -25,17 +25,23 @@
 
 ; macro to mark addresses up to (and not including) addr as unused memory
 fillto		macro addr
-			ds addr - $, 0xF7				; 0xF7 = RST 0x0030
+			if addr < $
+				.warning "Memory overflow! Inspect the binary for the string MEMORY OVERFLOW to find out where."
+				;sorry, I don't know how else to get Pasmo to identify the address it failed at...
+				db "MEMORY OVERFLOW"
+			else
+				ds addr - $, 0xF7				; 0xF7 = RST 0x0030
+			endif
 			endm
 			
 ; 0x0000: restart and interrupt routines
 			include "restarts.asm"
 ; Startup procedure
 			include "startup.asm"
+; 0x0205: Keyboard scanning
+			include "keyboard.asm"
 ; Character printing
 			include "printing.asm"
-; 0x028e: Keyboard scanning
-			include "keyboard.asm"
 ; Main interpreter loop
 			include "interpreter.asm"
 ; 0x0556: Cassette handling routines
@@ -86,6 +92,7 @@ next_char_type	equ 0x5b02	; how to interpret next character received by RST 0x00
 							; 10, 11, 12, 13 = ink, paper, flash, bright value
 							; 16 = y coordinate (PRINT AT)
 							; 17 = x coordinate (PRINT TAB)
+last_key		equ 0x5c08	; ASCII / control code of last key pressed
 font_ptr		equ 0x5c36	; pointer to font bitmap (minus 0x0100 bytes)
 curr_line_num	equ 0x5c45	; current line number
 border_colour	equ 0x5c48	; border colour (actually an attribute code: paper = border colour, ink = contrasting)
@@ -95,6 +102,7 @@ interp_ptr		equ 0x5c5d	; pointer to bit of program currently being executed
 calc_stack		equ 0x5c63	; pointer to start of calculator stack
 calc_stack_end	equ 0x5c65	; pointer to first unused byte after the calculator stack
 								; (and start of spare memory)
+flags2			equ 0x5c6a	; misc flags - notably, bit 3 set means that caps lock is enabled
 rand_seed		equ 0x5c76	; seed for random number generator
 frames			equ 0x5c78	; 3-byte frame counter (lowest byte first)
 udg_ptr			equ 0x5c7b	; pointer to UDG bitmaps

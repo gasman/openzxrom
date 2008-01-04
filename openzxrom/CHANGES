@@ -1,3 +1,8 @@
+OpenZXRom 2008-xx-xx
+- Additional keyboard scanning / decoding routines: 'key_test' @ 0x031e and
+  'key_code' @ 0x0333. Called from interrupt routine, so programs which poll
+  'last_key' system variable will now respond to keypresses
+
 OpenZXRom 2007-12-31
 - Routine to allocate arbitrary space in memory ('alloc_space')
 - LOAD command implemented ('cmd_load') (except DATA)

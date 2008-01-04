@@ -68,6 +68,8 @@ fatal_error
 			fillto 0x0038
 ; RST 0x0038: IM 1 interrupt service routine
 			push af
+			push bc
+			push de
 			push hl
 			ld hl,frames
 			inc (hl)						; increment frames system variable,
@@ -78,7 +80,20 @@ fatal_error
 			inc l
 			inc (hl)
 done_frames
+			; perform key scan
+			call key_scan
+			jr nz,int_key_scan_fail	; reject scan if zero flag reset (= invalid multiple-key combination)
+			call key_test
+			jr nc,int_key_scan_fail	; reject scan if carry flag reset (= no meaningful key, just a shift or nothing)
+			ld e,a
+			call key_code						; convert to ASCII code
+			; NB when we implement keyboard modes besides C/L, we'll need to call key_code
+			; with appropriate mode flags filled in C and D registers (see key_code in keyboard.asm)
+			ld (last_key),a	; store result in last_key system variable
+int_key_scan_fail
 			pop hl
+			pop de
+			pop bc
 			pop af
 			ei
 			ret
