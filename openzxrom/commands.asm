@@ -121,8 +121,7 @@ goto_found
 			jp interp_new_line
 
 get_colour_arg
-; fetch a numeric argument and ensure that it's a valid colour; return it in A
-; TODO: handle pseudo-colours 8 and 9 (but not for BORDER)
+; fetch a numeric argument and ensure that it's a valid colour (0-7); return it in A
 			call get_num_expr		; read colour argument
 			call assert_eos
 			call calc_pop_a_validate			; fetch colour argument into a
@@ -136,29 +135,89 @@ err_out_of_range
 
 cmd_ink
 ; process INK command
-			ld a,(perm_attribute)	; get current attribute
-			and 0xf8				; strip out old INK colour
-			push af
-			call get_colour_arg
-			pop bc
-			or b					; merge with remaining attributes
-			ld (perm_attribute),a	; and write back
+			call consume_a				; fetch ink colour
+			ld ix,perm_attribute	; tell set_ink to work with permanent attributes
+			call set_ink
+			jp assert_eos					; return, while verifying that this is indeed the end of the statement
+
+; enter with af = ink colour and validation flags as received from consume_a,
+; ix = pointer to perm_attribute or temp_attribute to indicate type of attribute to set
+set_ink
+			jr z,err_out_of_range	; reject immediately if consume_a returned a negative result
+set_ink_safe			; alternative entry point if we know argument isn't negative (i.e. from RST putchar)
+			cp 9
+			jr z,set_ink_contrast	; if ink 9, go to set contrasting ink colour
+			jr nc,err_out_of_range	; if ink >9, reject
+			cp 8
+			jr z,set_ink_transparent	; if ink 8, go to set transparent ink colour
+set_ink_opaque
+			ld b,a					; store ink colour in B
+			ld a,(ix+1)			; get mask byte
+			and 0xf8				; set ink bits to non-transparent
+			ld (ix+1),a			; and write back
+set_ink_attr_only
+			ld a,(ix)				; get attribute byte
+			and 0xf8				; strip out ink bits
+			or b						; merge new ink bits in
+			ld (ix),a				; and write back
 			ret
+set_ink_contrast
+			xor a						; set a=0 (black ink)
+			bit 5,(ix)			; test high bit of current paper colour
+			jr nz,set_ink_opaque	; if it's set (= light paper), jump back to set black ink
+			ld a,7					; otherwise, set white ink
+			jr set_ink_opaque
+set_ink_transparent
+			ld a,(ix+1)			; get mask byte
+			or 0x07					; set ink bits to transparent
+			ld (ix+1),a			; and write back
+			ld b,0					; now jump back to set ink attribute bits to 0
+			jr set_ink_attr_only	; so that they'll be unchanged when we OR the attribute onto the screen
 			
 cmd_paper
 ; process PAPER command
-			ld a,(perm_attribute)	; get current attribute
-			and 0xc7				; strip out old PAPER colour
-			push af
-			call get_colour_arg
-			sla a					; shift into PAPER bits
-			sla a
-			sla a
-			pop bc
-			or b					; merge with remaining attributes
-			ld (perm_attribute),a	; and write back
-			ret
+			call consume_a			; fetch paper colour
+			ld ix,perm_attribute	; tell set_paper to work with permanent attributes
+			call set_paper
+			jp assert_eos				; return, while verifying that this is indeed the end of the statement
 
+; enter with af = paper colour and validation flags as received from consume_a,
+; ix = pointer to perm_attribute or temp_attribute to indicate type of attribute to set
+set_paper
+			jr z,err_out_of_range	; reject immediately if consume_a returned a negative result
+set_paper_safe		; alternative entry point if we know argument isn't negative (i.e. from RST putchar)
+			cp 9
+			jr z,set_paper_contrast	; if paper 9, go to set contrasting paper colour
+			jr nc,err_out_of_range	; if paper >9, reject
+			cp 8
+			jr z,set_paper_transparent	; if paper 8, go to set transparent paper colour
+			sla a						; shift paper colour into bits 3-5
+			sla a
+			sla a
+set_paper_opaque
+			ld b,a					; store paper bits in B
+			ld a,(ix+1)			; get mask byte
+			and 0xc7				; set paper bits to non-transparent
+			ld (ix+1),a			; and write back
+set_paper_attr_only
+			ld a,(ix)				; get attribute byte
+			and 0xc7				; strip out paper bits
+			or b						; merge new paper bits in
+			ld (ix),a				; and write back
+			ret
+set_paper_contrast
+			xor a						; set a=0 (black paper)
+			bit 2,(ix)			; test high bit of current ink colour
+			jr nz,set_paper_opaque	; if it's set (= light ink), jump back to set black paper
+			ld a,0x38				; otherwise, set white paper
+			jr set_paper_opaque
+set_paper_transparent
+			ld a,(ix+1)			; get mask byte
+			or 0x38					; set paper bits to transparent
+			ld (ix+1),a			; and write back
+			ld b,0					; now jump back to set paper attribute bits to 0
+			jr set_paper_attr_only	; so that they'll be unchanged when we OR the attribute onto the screen
+			
 cmd_clear
 ; process CLEAR command
 			call get_expr								; look for optional argument

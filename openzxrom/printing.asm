@@ -47,21 +47,18 @@ putchar_main
 
 putchar_ink
 			; set temporary ink colour as specified in l
-			; TODO: check for overflow and handle INK 8 / INK 9
-			ld a,(temp_attribute)
-			and 0xf8						; strip out previous ink colour
-			jr write_temp_attribute
+			ld a,l							; put colour argument back into A
+			ld ix,temp_attribute	; point set_ink routine at temporary attributes
+			call set_ink_safe			; call set_ink, bypassing negative number test
+			jr putchar_colour_done
 
 putchar_paper
 			; set temporary paper colour as specified in l
-			; TODO: check for overflow and handle PAPER 8 / PAPER 9
-			sla l
-			sla l
-			sla l							; shift l to bits 3-5
-			ld a,(temp_attribute)
-			and 0xc7						; strip out previous paper colour
-			jr write_temp_attribute
-
+			ld a,l							; put colour argument back into A
+			ld ix,temp_attribute	; point set_paper routine at temporary attributes
+			call set_paper_safe			; call set_paper, bypassing negative number test
+			jr putchar_colour_done
+			
 putchar_flash
 			; set temporary FLASH attribute as specified in l
 			; TODO: check for overflow and handle FLASH 8
@@ -80,6 +77,7 @@ putchar_bright
 write_temp_attribute
 			or l								; merge bits from l into new attribute
 			ld (temp_attribute),a	; write back to temp_attribute
+putchar_colour_done
 			xor a							; expect ordinary char in next call
 			ld (next_char_type),a			; to putchar
 			exx
@@ -213,8 +211,15 @@ copy_char_bitmap_lp
 			rrca
 			or 0x50
 			ld h,a
-			ld a,(temp_attribute)			; write current temporary attribute value
-			ld (hl),a
+
+			push ix
+			ld ix,temp_attribute
+			ld a,(hl)						; read current attribute
+			and (ix+1)					; apply temporary attribute mask to preserve transparent attributes
+			or (ix)							; merge with current temporary attribute value
+			ld (hl),a						; write back to screen
+			pop ix
+
 			pop hl
 			; advance cursor
 			rr h

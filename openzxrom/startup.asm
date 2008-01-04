@@ -49,6 +49,7 @@ warm_start
 			ld (frames+2),a
 			ei											; enable interrupts, as SP is somewhere safe now
 			ld (next_char_type),a		; next character is not a parameter to a control code
+			ld (perm_mask),a				; attributes are fully opaque
 			ld hl,font - 0x0100				; point to font bitmap
 			ld (font_ptr),hl
 			ld hl,prog_mem					; designate all memory from prog_mem

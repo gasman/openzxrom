@@ -64,7 +64,7 @@ fillto		macro addr
 ; this is a no-op
       ret
 
-; 0x203c: Print string
+; 0x2030: Print string
 			include "print_string.asm"
 ; 0x2298: High-resolution graphics routines
 			include "graphics.asm"
@@ -107,7 +107,9 @@ rand_seed		equ 0x5c76	; seed for random number generator
 frames			equ 0x5c78	; 3-byte frame counter (lowest byte first)
 udg_ptr			equ 0x5c7b	; pointer to UDG bitmaps
 perm_attribute	equ 0x5c8d	; attribute value for global use (e.g. in CLS)
+perm_mask		equ 0x5c8e	; copied to temp_mask at the start of a PRINT
 temp_attribute	equ 0x5c8f	; attribute value for temporary use in putchar
+temp_mask		equ 0x5c90	; set bits will be preserved when applying temp_attribute to screen
 ramtop			equ 0x5cb2	; where to reset stack pointer to on NEW
 prog_mem		equ 0x5ccb	; traditional start of BASIC program memory
 udg_mem			equ 0xff58	; traditional start of user-defined graphic bitmaps

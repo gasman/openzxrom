@@ -189,7 +189,7 @@ describe_tape_file
 			dec a
 			ret nz							; return if file type is unrecognised
 put_tape_message
-			call print_string
+			call print_string_permanent
 			push ix							; now print filename - 10 bytes from (ix+1)
 			pop de
 			inc de
