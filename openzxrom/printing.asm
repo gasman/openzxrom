@@ -105,6 +105,7 @@ putchar_tab
 			and 0x1f						; extract current x coordinate
 			cp e							; are we already past the destination column?
 			jr c,putchar_tab_no_wrap		; if not, don't advance to next line
+			jr z,putchar_tab_no_wrap		; likewise if we're at the right position already
 			rrc h
 			rrc h
 			rrc h
