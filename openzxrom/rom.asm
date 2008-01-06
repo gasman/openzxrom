@@ -103,6 +103,7 @@ border_colour	equ 0x5c48	; border colour (actually an attribute code: paper = bo
 vars_addr		equ 0x5c4b	; pointer to start of variables table
 next_line_ptr	equ 0x5c55	; pointer to first (header) byte of next program line
 interp_ptr		equ 0x5c5d	; pointer to bit of program currently being executed
+workspace			equ 0x5c61	; pointer to start of temporary workspace / string storage area
 calc_stack		equ 0x5c63	; pointer to start of calculator stack
 calc_stack_end	equ 0x5c65	; pointer to first unused byte after the calculator stack
 								; (and start of spare memory)

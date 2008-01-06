@@ -62,6 +62,11 @@ alloc_space_no_move
 			; and calc_stack_end.
 			; TODO: update this (probably looping over all affected variables) as and
 			; when new system variables are introduced
+			; NOTE: When 'workspace' becomes movable (i.e. when we implement the VARS store
+			; or inserting program lines) we'll need to be selective about whether it's moved
+			; or not; if variable store is empty, then allocating space in variable store
+			; should move WORKSPACE but allocating space in the workspace shouldn't,
+			; despite them being both at the same address.
 			ld hl,(calc_stack)
 			or a
 			sbc hl,de										; test whether calc_stack is >= DE

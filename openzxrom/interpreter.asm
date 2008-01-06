@@ -50,6 +50,9 @@ interp_new_line
 
 interp
 ; This entry point will start interpreting from interp_ptr
+			ld hl,(workspace)		; garbage-collect the workspace and calculator stack
+			ld (calc_stack),hl	; by setting their lengths to zero,
+			ld (calc_stack_end),hl	; as there should be nothing useful on them at this point
 			call skip_whitespace
 			rst nextchar
 			cp 0x0d							; if next char a new line, jump to next

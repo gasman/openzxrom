@@ -54,6 +54,7 @@ warm_start
 			ld (font_ptr),hl
 			ld hl,prog_mem					; designate all memory from prog_mem
 			ld (vars_addr),hl				; as spare (i.e. set BASIC length to zero)
+			ld (workspace),hl
 			ld (calc_stack),hl
 			ld (calc_stack_end),hl
 			ld a,0x38						; set attributes to black on white

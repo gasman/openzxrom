@@ -535,7 +535,8 @@ load_basic
 			ld d,(ix+0x0c)
 			add hl,de						; find new location of spare memory
 			; TODO: compare with RAMTOP and complain if RAMTOP too low
-			ld (calc_stack),hl				; set new spare mem location
+			ld (workspace),hl				; set new spare mem location
+			ld (calc_stack),hl
 			ld (calc_stack_end),hl
 			pop ix							; recall prog_mem again
 			ld a,0xff						; a=0xff for data block
