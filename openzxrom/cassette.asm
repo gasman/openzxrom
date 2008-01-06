@@ -23,6 +23,10 @@
 ; Postal address: 14 Daisy Hill Drive, Adlington, Chorley,
 ;                 Lancs, PR6 9NE, United Kingdom
 
+			fillto 0x053f
+			jp load_bytes_exit	; entry point to a routine equivalent to load_bytes_exit,
+				; used by Behind Closed Doors and Juggernaut
+
 			fillto 0x0556
 load_bytes
 			; load bytes from tape
@@ -79,6 +83,7 @@ load_bytes_loaded
 			scf								; otherwise set carry to indicate success
 ; common exit route, regardless of success or failure
 load_bytes_exit
+; restore border colour and re-enable interrupts
 			ex af,af'					; preserve flags
 			ld a,(border_colour)	; restore border colour
 			srl a
