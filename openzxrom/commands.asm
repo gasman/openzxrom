@@ -61,7 +61,7 @@ command_table
 			dw cmd_load	; LOAD
 			dw error_command	; LIST
 			dw error_command	; LET
-			dw error_command	; PAUSE
+			dw cmd_pause	; PAUSE
 			dw error_command	; NEXT
 			dw cmd_poke		; POKE
 			dw cmd_print	; PRINT
@@ -640,3 +640,23 @@ print_item_numeric
 			rst calc								; invoke calculator
 			db cc_strs, cc_endcalc	; to perform STR$ on the number on top of the stack
 			ret											; then return to deal with it as a string
+
+cmd_pause
+; process PAUSE command
+			call consume_bc				; fetch argument
+			call assert_eos				; and confirm that this is the end of the statement
+			ld hl,flags
+			res 5,(hl)						; reset 'key is pressed' flag
+pause_lp
+			halt
+			bit 5,(hl)						; check for key
+			ret nz								; return if key pressed
+			ld a,b								; is bc zero? (Will only be the case for PAUSE 0)
+			or c
+			jr z,pause_lp					; if so, loop indefinitely until key pressed
+			dec bc								; otherwise, decrement and return if it's zero now
+			ld a,b
+			or c
+			jr nz,pause_lp
+			ret
+			

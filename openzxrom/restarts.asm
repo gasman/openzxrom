@@ -81,6 +81,7 @@ fatal_error
 			inc (hl)
 done_frames
 			; perform key scan
+			; TODO: handle key debouncing / repeat
 			call key_scan
 			jr nz,int_key_scan_fail	; reject scan if zero flag reset (= invalid multiple-key combination)
 			call key_test

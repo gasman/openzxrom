@@ -7,6 +7,7 @@ OpenZXRom 2008-xx-xx
   (transparent) and 9 (contrast)
 - FLASH and BRIGHT commands implemented ('cmd_flash' / 'cmd_bright'), and
   'putchar' updated to support FLASH/BRIGHT 8 (transparent)
+- PAUSE command implemented ('cmd_pause')
 - Tape loader outputs an extra newline when the matching block is found
 - Workspace / calculator stack is garbage-collected before each statement
 - Added 0x053f as an alternate entry point to load_bytes_exit

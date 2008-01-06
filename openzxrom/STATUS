@@ -79,6 +79,7 @@ BASIC commands supported
 	REM
 	GO TO
 	LOAD (except DATA)
+	PAUSE
 	POKE
 	PRINT (except numeric expressions, OVER, INVERSE and #n)
 	PLOT
@@ -89,7 +90,7 @@ BASIC commands supported
 BASIC commands not supported:
 	DEF FN, CAT, FORMAT, MOVE, ERASE, OPEN #, CLOSE #, MERGE, VERIFY, BEEP, CIRCLE,
 	INVERSE, OVER, LPRINT, LLIST, READ, DATA, RESTORE, CONTINUE, DIM, FOR, GO SUB,
-	INPUT, LIST, LET, PAUSE, NEXT, SAVE, IF, DRAW, RETURN, COPY
+	INPUT, LIST, LET, NEXT, SAVE, IF, DRAW, RETURN, COPY
 	
 Expression support
 ------------------
