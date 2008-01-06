@@ -575,17 +575,27 @@ print_item_not_expr
 			; TODO: handle display modifiers and stream redirection at this point
 print_item_expect_separator
 			rst nextchar					; look at next character
-			cp ';'
-			jr nz,print_item_not_semicolon
-			rst consume						; consume the semicolon character
-			call nextchar_is_eos	; check if we're at the end of the statement
-			ret z									; just return (with no trailing newline) if so
-			jr do_print_item			; otherwise, go back for more print items
-print_item_not_semicolon
-			; TODO: handle comma and apostrophe separators at this point
+			cp ';'								; match it against separator characters ; ' ,
+			jr z,print_item_semicolon
+			cp "'"
+			jr z,print_item_apostrophe
+			cp ','
+			jr z,print_item_comma
 			; having exhausted all other possibilities, assert that we're at the end of the statement
 			call assert_eos
 			ld a,0x0d							; if so, output a newline character and return
 			rst putchar
 			ret	
-			
+
+print_item_comma
+			ld a,0x06							; output a comma control
+			jr print_item_comma_next
+print_item_apostrophe
+			ld a,0x0d							; output a newline
+print_item_comma_next
+			rst putchar
+print_item_semicolon
+			rst consume						; consume the separator character
+			call nextchar_is_eos	; check if we're at the end of the statement
+			ret z									; just return (with no trailing newline) if so
+			jr do_print_item			; otherwise, go back for more print items
