@@ -221,13 +221,16 @@ search_tape_header
 compare_tape_header
 			ld a,(de)
 			cp 0xff					; byte 0xff = stop comparing, consider it a match
-			ret z						; found match, so return
+			jr z,tape_header_matched	; found match, so jump to 'success' routine
 			cp (hl)
 			jr nz,search_tape_header	; if match fails, jump back to search for next
 			inc hl					; continue to next byte
 			inc de
 			djnz compare_tape_header
 			; if we get here, full header has matched
+tape_header_matched
+			ld a,0x0d				; output a newline
+			rst putchar
 			ret							; return successful match
 
 program_text

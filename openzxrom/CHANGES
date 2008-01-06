@@ -6,6 +6,7 @@ OpenZXRom 2008-xx-xx
   (transparent) and 9 (contrast)
 - FLASH and BRIGHT commands implemented ('cmd_flash' / 'cmd_bright'), and
   'putchar' updated to support FLASH/BRIGHT 8 (transparent)
+- Tape loader outputs an extra newline when the matching block is found
 - Bugfix: PRINT TAB x no longer moves to the next line if cursor is already at
   position x. (Also affected PRINT AT y,0)
 
