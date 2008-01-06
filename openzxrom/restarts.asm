@@ -90,6 +90,8 @@ done_frames
 			; NB when we implement keyboard modes besides C/L, we'll need to call key_code
 			; with appropriate mode flags filled in C and D registers (see key_code in keyboard.asm)
 			ld (last_key),a	; store result in last_key system variable
+			ld hl,flags	; and indicate that a new key is ready in bit 5 of FLAGS
+			set 5,(hl)
 int_key_scan_fail
 			pop hl
 			pop de

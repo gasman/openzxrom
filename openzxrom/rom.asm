@@ -94,6 +94,7 @@ next_char_type	equ 0x5b02	; how to interpret next character received by RST 0x00
 							; 17 = x coordinate (PRINT TAB)
 last_key		equ 0x5c08	; ASCII / control code of last key pressed
 font_ptr		equ 0x5c36	; pointer to font bitmap (minus 0x0100 bytes)
+flags				equ 0x5c3b	; misc flags - bit 5 set means new key available in last_key
 curr_line_num	equ 0x5c45	; current line number
 border_colour	equ 0x5c48	; border colour (actually an attribute code: paper = border colour, ink = contrasting)
 vars_addr		equ 0x5c4b	; pointer to start of variables table
