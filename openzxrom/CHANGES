@@ -2,6 +2,7 @@ OpenZXRom 2008-xx-xx
 - Additional keyboard scanning / decoding routines: 'key_test' @ 0x031e and
   'key_code' @ 0x0333. Called from interrupt routine, so programs which poll
   'last_key' system variable will now respond to keypresses
+- PRINT command implemented ('cmd_print')
 - 'cmd_ink', 'cmd_paper' and 'putchar' routines support INK/PAPER 8
   (transparent) and 9 (contrast)
 - FLASH and BRIGHT commands implemented ('cmd_flash' / 'cmd_bright'), and

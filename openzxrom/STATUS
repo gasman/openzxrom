@@ -80,6 +80,7 @@ BASIC commands supported
 	GO TO
 	LOAD (except DATA)
 	POKE
+	PRINT (except numeric expressions, OVER, INVERSE and #n)
 	PLOT
 	RUN
 	RANDOMIZE
@@ -88,7 +89,7 @@ BASIC commands supported
 BASIC commands not supported:
 	DEF FN, CAT, FORMAT, MOVE, ERASE, OPEN #, CLOSE #, MERGE, VERIFY, BEEP, CIRCLE,
 	INVERSE, OVER, LPRINT, LLIST, READ, DATA, RESTORE, CONTINUE, DIM, FOR, GO SUB,
-	INPUT, LIST, LET, PAUSE, NEXT, PRINT, SAVE, IF, DRAW, RETURN, COPY
+	INPUT, LIST, LET, PAUSE, NEXT, SAVE, IF, DRAW, RETURN, COPY
 	
 Expression support
 ------------------

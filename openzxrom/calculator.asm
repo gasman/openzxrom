@@ -255,6 +255,7 @@ cc_in			equ 0x2c
 			dw calcop_in		; 2c = in
 cc_usr_n	equ 0x2d
 			dw calcop_usr_n	; 2d = usr_n
+cc_strs		equ 0x2e
 			dw error_calc_op	; 2e = str$
 			dw error_calc_op	; 2f = chr$
 			dw error_calc_op	;

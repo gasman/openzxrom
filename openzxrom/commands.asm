@@ -558,21 +558,30 @@ cmd_print
 			ld (temp_mask),a
 do_print_item
 ; parse and process the sequence of PRINT items, each of which may be one of the following:
-; * a string or numeric expression
 ; * a display modifier: INK, PAPER, BRIGHT, FLASH, AT, TAB, INVERSE, OVER
 ; * a stream redirection: #n
+; * a string or numeric expression
 ; * a separator: ; , '
 ; * the end of statement
+			rst nextchar					; get next character
+			cp 0xd9								; check if it's a colour display modifier
+			jr c,print_item_not_colour_modifier	; - i.e. INK/PAPER/FLASH/BRIGHT/INVERSE/OVER,
+			cp 0xdf								; code 0xd9-0xdf
+			jr c,print_item_colour_modifier
+print_item_not_colour_modifier
+			cp 0xac								; check for AT
+			jr z,print_item_at
+			cp 0xad								; check for TAB
+			jr z,print_item_tab
+			; TODO: recognise stream redirection (#n) at this point			
 			call get_expr					; look for a string or numeric expression
-			jr c,print_item_not_expr	; jump ahead if not found
-			call z,syntax_error		; if it's numeric, die for now.
-			; TODO: support numeric expressions...
+			jr c,print_item_expect_separator	; jump ahead if not found
+			call z,print_item_numeric		; if it's numeric, convert to a string
 			; we now have a string on top of the calculator stack
 			call calc_pop_aedcb		; fetch string parameters into AEDCB
 			call print_string			; and print the string
-			jr print_item_expect_separator	; next character must be a separator or end of statement
-print_item_not_expr
-			; TODO: handle display modifiers and stream redirection at this point
+
+			; next character must be a separator or end of statement
 print_item_expect_separator
 			rst nextchar					; look at next character
 			cp ';'								; match it against separator characters ; ' ,
@@ -587,6 +596,32 @@ print_item_expect_separator
 			rst putchar
 			ret	
 
+print_item_at
+			rst consume						; consume the AT token
+			ld a,0x16
+			rst putchar						; output an AT control code
+			call consume_a				; fetch y coordinate
+			rst putchar						; output it
+			rst nextchar					; next character must be a comma
+			cp ','
+			call nz,syntax_error
+			jr print_item_one_arg	; now fetch the remaining parameter and output it as for colour items
+
+print_item_tab
+			ld a,0x17							; TAB control code
+			jr print_item_control_code_one_arg	; output control code then handle parameter as for colour items
+			
+print_item_colour_modifier
+; handle INK, PAPER, FLASH, BRIGHT, INVERSE, OVER
+			sub 0xc9							; control codes (0x10-0x15) are 0xc9 less than the token codes (0xd9-0xde)
+print_item_control_code_one_arg
+			rst putchar						; output the control code
+print_item_one_arg
+			rst consume						; consume the token
+			call consume_a				; fetch the parameter
+			rst putchar						; output it
+			jr print_item_expect_separator	; this must now be followed by a separator or end of statement
+
 print_item_comma
 			ld a,0x06							; output a comma control
 			jr print_item_comma_next
@@ -599,3 +634,8 @@ print_item_semicolon
 			call nextchar_is_eos	; check if we're at the end of the statement
 			ret z									; just return (with no trailing newline) if so
 			jr do_print_item			; otherwise, go back for more print items
+
+print_item_numeric
+			rst calc								; invoke calculator
+			db cc_strs, cc_endcalc	; to perform STR$ on the number on top of the stack
+			ret											; then return to deal with it as a string
