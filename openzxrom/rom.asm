@@ -86,12 +86,15 @@ screen		equ 0x4000
 attributes	equ 0x5800
 attributes_end	equ 0x5b00
 
+; System variables specific to OpenZXRom:
 cursor_addr	equ 0x5b00		; Screen address at which next character will be displayed
 next_char_type	equ 0x5b02	; how to interpret next character received by RST 0x0010:
 							; 00 = ordinary character
 							; 10, 11, 12, 13 = ink, paper, flash, bright value
 							; 16 = y coordinate (PRINT AT)
 							; 17 = x coordinate (PRINT TAB)
+
+; System variables common with original ROM:
 last_key		equ 0x5c08	; ASCII / control code of last key pressed
 font_ptr		equ 0x5c36	; pointer to font bitmap (minus 0x0100 bytes)
 flags				equ 0x5c3b	; misc flags - bit 5 set means new key available in last_key

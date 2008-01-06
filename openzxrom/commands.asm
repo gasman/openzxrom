@@ -64,7 +64,7 @@ command_table
 			dw error_command	; PAUSE
 			dw error_command	; NEXT
 			dw cmd_poke		; POKE
-			dw error_command	; PRINT
+			dw cmd_print	; PRINT
 			dw cmd_plot		; PLOT
 			dw cmd_run		; RUN
 			dw error_command	; SAVE
@@ -549,3 +549,43 @@ load_basic
 				; and for any non-diabolically-hacked program GO TO 32768 will
 				; result in an immediate 'program finished', which is what we want.
 			; From goto_bc we launch straight into the main interpreter loop.
+
+cmd_print
+; process PRINT command
+			ld a,(perm_attribute)	; copy permanent attribute variables to temporary ones
+			ld (temp_attribute),a
+			ld a,(perm_mask)
+			ld (temp_mask),a
+do_print_item
+; parse and process the sequence of PRINT items, each of which may be one of the following:
+; * a string or numeric expression
+; * a display modifier: INK, PAPER, BRIGHT, FLASH, AT, TAB, INVERSE, OVER
+; * a stream redirection: #n
+; * a separator: ; , '
+; * the end of statement
+			call get_expr					; look for a string or numeric expression
+			jr c,print_item_not_expr	; jump ahead if not found
+			call z,syntax_error		; if it's numeric, die for now.
+			; TODO: support numeric expressions...
+			; we now have a string on top of the calculator stack
+			call calc_pop_aedcb		; fetch string parameters into AEDCB
+			call print_string			; and print the string
+			jr print_item_expect_separator	; next character must be a separator or end of statement
+print_item_not_expr
+			; TODO: handle display modifiers and stream redirection at this point
+print_item_expect_separator
+			rst nextchar					; look at next character
+			cp ';'
+			jr nz,print_item_not_semicolon
+			rst consume						; consume the semicolon character
+			call nextchar_is_eos	; check if we're at the end of the statement
+			ret z									; just return (with no trailing newline) if so
+			jr do_print_item			; otherwise, go back for more print items
+print_item_not_semicolon
+			; TODO: handle comma and apostrophe separators at this point
+			; having exhausted all other possibilities, assert that we're at the end of the statement
+			call assert_eos
+			ld a,0x0d							; if so, output a newline character and return
+			rst putchar
+			ret	
+			
