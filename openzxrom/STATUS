@@ -35,8 +35,8 @@ routines in the ZX ROM.
 
 0x0556: Load bytes from tape
 	LOAD only, no VERIFY. Other addresses synchronised with ZX ROM behaviour are
-	0x0565 (entry point as trapped by FUSE for tape flash-loading) and 0x05e2
-	(return address from FUSE flash-loading).
+	0x0565 (entry point as trapped by FUSE for tape flash-loading), 0x05e2 (return
+	address from FUSE flash-loading) and 0x053f (restore border and exit).
 	
 0x0d6b: Clear screen
 	0x0daf is another valid entry point.
