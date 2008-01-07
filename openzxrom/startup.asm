@@ -62,7 +62,7 @@ warm_start
 			; TODO: establish exactly where we should copy perm_attribute to
 			; temp_attribute - currently doing this in clear_screen
 			ld a,7
-			out (254),a						; border white
+			call set_border				; border white
 			call clear_screen
 			ld de,splash_text				; draw splash screen
 			ld bc,splash_text_end - splash_text

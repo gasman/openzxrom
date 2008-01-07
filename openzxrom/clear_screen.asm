@@ -42,7 +42,6 @@ clear_screen
 			ld (hl),l
 			ldir
 			ld a,(perm_attribute)			; get permanent attribute value
-			ld (temp_attribute),a			; copy to temporary value for putchar
 			ld (hl),a						; and clear screen to those colours
 			ld bc,attributes_end - attributes - 1
 			ldir
