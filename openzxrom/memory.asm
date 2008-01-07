@@ -1,6 +1,6 @@
 ; memory.asm: Memory management routines
 ; From the OpenZXRom project
-; Copyright (c) 2007 Matthew Westcott
+; Copyright (c) 2007-2008 Matthew Westcott
 ;
 ; $Id$
 ;

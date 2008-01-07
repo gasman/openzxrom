@@ -1,4 +1,4 @@
-OpenZXRom 2008-xx-xx
+OpenZXRom 2008-01-07
 - Additional keyboard scanning / decoding routines: 'key_test' @ 0x031e and
   'key_code' @ 0x0333. Called from interrupt routine, so programs which poll
   'last_key' system variable will now respond to keypresses

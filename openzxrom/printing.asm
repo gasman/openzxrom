@@ -1,6 +1,6 @@
 ; printing.asm: Character printing routines
 ; From the OpenZXRom project
-; Copyright (c) 2005-2007 Matthew Westcott
+; Copyright (c) 2005-2008 Matthew Westcott
 ;
 ; $Id$
 ;
