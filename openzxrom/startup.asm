@@ -66,7 +66,7 @@ warm_start
 			call clear_screen
 			ld de,splash_text				; draw splash screen
 			ld bc,splash_text_end - splash_text
-			call print_string
+			call print_string_permanent
 
 			; wait for enter to be pressed
 			ld bc,0xbffe
