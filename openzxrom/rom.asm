@@ -40,12 +40,14 @@ fillto		macro addr
 			include "startup.asm"
 ; 0x0205: Keyboard scanning
 			include "keyboard.asm"
+; 0x03b5: Beeper
+			include "speaker.asm"
 ; Character printing
 			include "printing.asm"
-; Main interpreter loop
-			include "interpreter.asm"
 ; 0x0556: Cassette handling routines
 			include "cassette.asm"
+; Main interpreter loop
+			include "interpreter.asm"
 ; 0x0d6b: Clear screen
 			include "clear_screen.asm"
 ; Error handling
