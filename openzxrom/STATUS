@@ -33,6 +33,8 @@ routines in the ZX ROM.
   Does not account for K/E/G cursor modes; only L and C (with and without
   shifts).
 
+0x03b5: Play a beep
+
 0x0556: Load bytes from tape
 	LOAD only, no VERIFY. Other addresses synchronised with ZX ROM behaviour are
 	0x0565 (entry point as trapped by FUSE for tape flash-loading), 0x05e2 (return
@@ -94,21 +96,22 @@ BASIC commands not supported:
 	
 Expression support
 ------------------
-	Numeric literals - supported
+	Numeric literals (including BIN) - supported
 	String literals - supported
 	Bracketed expressions - supported
 	Variables - not supported
 	Array subscripts - not supported
 	Operators:
-		Boolean (OR , AND , NOT) - parsed but not evaluated
-		Numeric comparison ( = , < , > , <> , <= , >= ) - parsed but not evaluated
+		Boolean (OR , AND , NOT) - supported
+		Numeric comparison ( = , < , > , <> , <= , >= ) - supported
 		String comparison ( = , < , > , <> , <= , >= ) - parsed but not evaluated
 		String concatenation (+) - parsed but not evaluated
-		Arithmetic ( + , - , * , / , ^ ) - unary '+' trivially skipped over, others
-			parsed but not evaluated
-		Functions:
-			IN, PEEK, USR (numeric)
-		  Others parsed but not evaluated (arguments not parsed)
+		Arithmetic ( + , - , * , / , ^ ) - supported
+	Functions supported:
+		RND, PI, SIN, COS, TAN, ASN, ACS, ATN, LN, EXP, INT, SQR, SGN, ABS, PEEK, IN,
+		USR (numeric)
+	Functions not supported:
+		INKEY$, FN, POINT, ATTR, VAL$, CODE, VAL, LEN, USR (string), STR$, CHR$
 
 Known bugs
 ----------
