@@ -52,10 +52,39 @@ nextchar	ld hl,(interp_ptr)
 ; (i.e. advance to next non-ignorable character; ignorable = space and control codes)
 consume		jp consume_main
 			
+
+; === begin ZX81 ROM excerpt ===
+
+; ---------------------------------------
+; THE 'FLOATING POINT CALCULATOR' RESTART
+; ---------------------------------------
+; this restart jumps to the recursive floating-point calculator.
+; the ZX81's internal, FORTH-like, stack-based language.
+;
+; In the five remaining bytes there is, appropriately, enough room for the
+; end-calc literal - the instruction which exits the calculator.
+
 			fillto 0x0028
-; RST 0x0028: enter calculator mode
-calc			pop hl
-			jp calc_main
+;; FP-CALC
+fp_calc
+			jp calculate		; jump immediately to the CALCULATE routine.
+
+; ---
+
+;; end-calc
+end_calc
+			pop af				; drop the calculator return address RE-ENTRY
+			exx					; switch to the other set.
+
+			ex (sp),hl			; transfer H'L' to machine stack for the
+								; return address.
+								; when exiting recursion then the previous
+								; pointer is transferred to H'L'.
+
+			exx					; back to main set.
+			ret					; return.
+
+; === end ZX81 ROM excerpt ===
 
 			fillto 0x0030
 ; Arrive here if we execute any undefined area of the ROM

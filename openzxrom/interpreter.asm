@@ -52,7 +52,7 @@ interp
 ; This entry point will start interpreting from interp_ptr
 			ld hl,(workspace)		; garbage-collect the workspace and calculator stack
 			ld (calc_stack),hl	; by setting their lengths to zero,
-			ld (calc_stack_end),hl	; as there should be nothing useful on them at this point
+			ld (stkend),hl	; as there should be nothing useful on them at this point
 			call skip_whitespace
 			rst nextchar
 			cp 0x0d							; if next char a new line, jump to next
@@ -81,7 +81,7 @@ cmd_stop
 			call assert_eos			; assert that an end-of-statement follows the STOP token; die if not
 interp_finished
 			rst error						; report "program finished"
-			db 0xff
+			db err_code_program_finished
 interp_invalid
 			; equivalent to 'nonsense in basic', but we'll do our standard
 			; crash-and-burn thing instead to prompt us to do a post-mortem

@@ -28,13 +28,13 @@
 ; Returns with BC and DE intact
 alloc_space
 			push bc											; store length of space
-			ld hl,(calc_stack_end)			; calculate number of bytes to be moved;
-			or a												; = calc_stack_end - address_to_open_at
+			ld hl,(stkend)			; calculate number of bytes to be moved;
+			or a												; = stkend - address_to_open_at
 			sbc hl,de
 			push hl
 			
-			ld hl,(calc_stack_end)			; calculate last byte to move;
-			dec hl											; = calc_stack_end - 1
+			ld hl,(stkend)			; calculate last byte to move;
+			dec hl											; = stkend - 1
 			push hl
 			add hl,bc										; determine where to move it to
 			; FIXME: throw out-of-memory if this exceeds 0xffff / RAMTOP
@@ -59,7 +59,7 @@ alloc_space_no_move
 			ex de,hl										; any system variables now pointing >= DE
 																	; should be incremented by BC
 			; at the moment, the only system variables we expect to change are calc_stack
-			; and calc_stack_end.
+			; and stkend.
 			; TODO: update this (probably looping over all affected variables) as and
 			; when new system variables are introduced
 			; NOTE: When 'workspace' becomes movable (i.e. when we implement the VARS store
@@ -75,14 +75,14 @@ alloc_space_no_move
 			add hl,bc										; increment by BC
 			ld (calc_stack),hl
 no_inc_calc_stack
-			ld hl,(calc_stack_end)
+			ld hl,(stkend)
 			or a
 			sbc hl,de
-			jr c,no_inc_calc_stack_end	; skip increasing calc_stack if it's less than DE
+			jr c,no_inc_stkend	; skip increasing calc_stack if it's less than DE
 			add hl,de
 			add hl,bc
-			ld (calc_stack_end),hl
-no_inc_calc_stack_end
+			ld (stkend),hl
+no_inc_stkend
 			ret
 
 ; TODO: free_space routine

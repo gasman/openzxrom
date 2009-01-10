@@ -47,6 +47,8 @@ error_unprintable
 
 ; throw an 'unsupported RST 0x0028 calculator operation' error
 error_calc_op
+			srl a ; divide by two, because by the time we get here A has been multiplied
+				; by two since we fetched the opcode
 			ld de,err_msg_calc_op
 			ld bc,err_msg_calc_op_len
 ; print error message followed by the A register output in hex

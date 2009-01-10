@@ -70,7 +70,7 @@ fillto		macro addr
 			include "print_string.asm"
 ; 0x2298: High-resolution graphics routines
 			include "graphics.asm"
-; 0x2ab6: Floating-point calculator routines
+; 0x2ab6 (approx): Floating-point calculator routines
 			include "calculator.asm"
 ; Error diagnostics
 			include "diagnostics.asm"
@@ -99,6 +99,9 @@ next_char_type	equ 0x5b02	; how to interpret next character received by RST 0x00
 ; System variables common with original ROM:
 last_key		equ 0x5c08	; ASCII / control code of last key pressed
 font_ptr		equ 0x5c36	; pointer to font bitmap (minus 0x0100 bytes)
+
+sysvars_base	equ 0x5c3a	; IY points here to allow indirect access to system variables
+
 flags				equ 0x5c3b	; misc flags - bit 5 set means new key available in last_key
 curr_line_num	equ 0x5c45	; current line number
 border_colour	equ 0x5c48	; border colour (actually an attribute code: paper = border colour, ink = contrasting)
@@ -107,8 +110,11 @@ next_line_ptr	equ 0x5c55	; pointer to first (header) byte of next program line
 interp_ptr		equ 0x5c5d	; pointer to bit of program currently being executed
 workspace			equ 0x5c61	; pointer to start of temporary workspace / string storage area
 calc_stack		equ 0x5c63	; pointer to start of calculator stack
-calc_stack_end	equ 0x5c65	; pointer to first unused byte after the calculator stack
+stkend			equ 0x5c65	; pointer to first unused byte after the calculator stack
 								; (and start of spare memory)
+stkend_hi		equ 0x5c66	; high byte of stkend
+breg			equ 0x5c67	; temporary storage for B register, used in calculator routines
+mem				equ 0x5c68	; pointer to base of calculator's memory area
 flags2			equ 0x5c6a	; misc flags - notably, bit 3 set means that caps lock is enabled
 rand_seed		equ 0x5c76	; seed for random number generator
 frames			equ 0x5c78	; 3-byte frame counter (lowest byte first)
@@ -117,6 +123,11 @@ perm_attribute	equ 0x5c8d	; attribute value for global use (e.g. in CLS)
 perm_mask		equ 0x5c8e	; copied to temp_mask at the start of a PRINT
 temp_attribute	equ 0x5c8f	; attribute value for temporary use in putchar
 temp_mask		equ 0x5c90	; set bits will be preserved when applying temp_attribute to screen
+membot			equ 0x5c92	; calculator's memory area; space for 6 x 5-byte values
 ramtop			equ 0x5cb2	; where to reset stack pointer to on NEW
 prog_mem		equ 0x5ccb	; traditional start of BASIC program memory
 udg_mem			equ 0xff58	; traditional start of user-defined graphic bitmaps
+
+; offsets used to access system variables from IY:
+
+iy_flags		equ flags - sysvars_base

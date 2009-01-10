@@ -86,7 +86,7 @@ cmd_goto
 			pop hl							; Discard the return address (overridden here)
 			call get_num_expr		; read line number
 			call assert_eos			; ensure that the end of statement follows
-			call calc_pop_bc_validate		; fetch the line number into bc, ensuring that
+			call find_int		; fetch the line number into bc, ensuring that
 													; it's positive and <=0xffff
 				; (actually the original ROM gives "B Integer out of range, 0:1" for >=61440,
 				; and "N Statement lost, 0:255" for >=32768. How terribly random)
@@ -130,7 +130,7 @@ cmd_bright
 ; enter with af = BRIGHT parameter and validation flags as received from consume_a,
 ; ix = pointer to perm_attribute or temp_attribute to indicate type of attribute to set
 set_bright
-			jr z,err_out_of_range	; reject immediately if consume_a returned a negative result
+			jr nz,err_out_of_range	; reject immediately if consume_a returned a negative result
 set_bright_safe			; alternative entry point if we know argument isn't negative (i.e. from RST putchar)
 			cp 8
 			jr z,set_bright_transparent	; if bright 8, go to set transparent bright
@@ -160,7 +160,7 @@ cmd_flash
 ; enter with af = FLASH parameter and validation flags as received from consume_a,
 ; ix = pointer to perm_attribute or temp_attribute to indicate type of attribute to set
 set_flash
-			jr z,err_out_of_range	; reject immediately if consume_a returned a negative result
+			jr nz,err_out_of_range	; reject immediately if consume_a returned a negative result
 set_flash_safe			; alternative entry point if we know argument isn't negative (i.e. from RST putchar)
 			cp 8
 			jr z,set_flash_transparent	; if flash 8, go to set transparent flash
@@ -184,13 +184,13 @@ get_colour_arg
 			call get_num_expr		; read colour argument
 			call assert_eos
 			call calc_pop_a_validate			; fetch colour argument into a
-			jr z,err_out_of_range	; explicitly forbid negative values, because calc_pop_a_validate doesn't
+			jr nz,err_out_of_range	; explicitly forbid negative values, because calc_pop_a_validate doesn't
 			cp 8								; ensure it's <8
 			jr nc,err_out_of_range
 			ret
 err_out_of_range
 			rst error
-			db 0x0a					; code for "out of range"
+			db err_code_out_of_range
 
 cmd_ink
 ; process INK command
@@ -202,7 +202,7 @@ cmd_ink
 ; enter with af = ink colour and validation flags as received from consume_a,
 ; ix = pointer to perm_attribute or temp_attribute to indicate type of attribute to set
 set_ink
-			jr z,err_out_of_range	; reject immediately if consume_a returned a negative result
+			jr nz,err_out_of_range	; reject immediately if consume_a returned a negative result
 set_ink_safe			; alternative entry point if we know argument isn't negative (i.e. from RST putchar)
 			cp 9
 			jr z,set_ink_contrast	; if ink 9, go to set contrasting ink colour
@@ -243,7 +243,7 @@ cmd_paper
 ; enter with af = paper colour and validation flags as received from consume_a,
 ; ix = pointer to perm_attribute or temp_attribute to indicate type of attribute to set
 set_paper
-			jr z,err_out_of_range	; reject immediately if consume_a returned a negative result
+			jr nz,err_out_of_range	; reject immediately if consume_a returned a negative result
 set_paper_safe		; alternative entry point if we know argument isn't negative (i.e. from RST putchar)
 			cp 9
 			jr z,set_paper_contrast	; if paper 9, go to set contrasting paper colour
@@ -283,12 +283,12 @@ cmd_clear
 			jr c,cmd_clear_no_arg			; if not present, just perform stock CLEAR actions (clear screen and vars)
 			call nz,syntax_error				; die if argument is a string
 			call assert_eos						; die if expression is not followed by end of statement
-			call calc_pop_bc_validate		; pop argument into bc, ensuring that it's positive and within 16 bits
+			call find_int		; pop argument into bc, ensuring that it's positive and within 16 bits
 			push bc
 			call vanilla_clear					; do stock CLEAR actions (clear screen and vars)
 			pop bc
 			sbc hl,bc					; check that requested address (BC) is above bottom of free memory (HL)
-				; TODO: consider making the limit slightly above calc_stack_end, for some
+				; TODO: consider making the limit slightly above stkend, for some
 				; breathing room (could do INC H here, but 256 bytes breathing room
 				; is probably excessive)
 			jp nc,err_out_of_range				; RAMTOP no good...
@@ -303,12 +303,12 @@ cmd_clear_no_arg
 			call assert_eos					; ensure that end-of-statement follows CLEAR
 vanilla_clear
 ; perform the actions of a parameterless CLEAR: clear the screen and delete variables.
-; Return with calc_stack_end (address of bottom of free memory) in HL.
+; Return with stkend (address of bottom of free memory) in HL.
 ; Also performed on RUN.
 			call clear_screen
 			ld hl,(vars_addr)					; collapse all memory areas
 			ld (calc_stack),hl					; from end of program onwards
-			ld (calc_stack_end),hl
+			ld (stkend),hl
 			ret
 
 cmd_run
@@ -319,7 +319,7 @@ cmd_run
 			jr c,run_no_arg						; if none found, go to line 0
 			call nz,syntax_error			; die if it's a string rather than a number
 			call assert_eos						; ensure end-of-statement follows argument
-			call calc_pop_bc_validate	; retrieve argument into bc, ensuring it's
+			call find_int	; retrieve argument into bc, ensuring it's
 			jp goto_bc								; within 0<=bc<=0xffff
 run_no_arg
 			call assert_eos						; ensure end-of-statement follows RUN
@@ -332,7 +332,7 @@ cmd_randomize
 			jr c,randomize_frames			; if none supplied, use FRAMES
 			call nz,syntax_error			; die if it's a string rather than numeric
 			call assert_eos						; ensure end-of-statement follows argument
-			call calc_pop_bc_validate		; if one supplied, check it's within 0<=bc<=0xffff
+			call find_int		; if one supplied, check it's within 0<=bc<=0xffff
 			ld a,b								; check if it's 0
 			or c
 			jr nz,randomize_bc					; if not, use that as our seed
@@ -394,7 +394,7 @@ cmd_load
 			ldir
 			
 			call get_string_expr			; fetch filename expression
-			call calc_pop_aedcb				; get address and length of string
+			call stk_fetch				; get address and length of string
 																; into DE and BC respectively
 
 			; get filename length in a; = BC or 10, whichever is less
@@ -513,7 +513,7 @@ load_code_datablock
 
 report_loading_error
 			rst error
-			db 0x1a			; code for loading error
+			db err_code_loading_error
 
 load_basic
 			pop ix										; retrieve buffer address
@@ -537,7 +537,7 @@ load_basic
 			; TODO: compare with RAMTOP and complain if RAMTOP too low
 			ld (workspace),hl				; set new spare mem location
 			ld (calc_stack),hl
-			ld (calc_stack_end),hl
+			ld (stkend),hl
 			pop ix							; recall prog_mem again
 			ld a,0xff						; a=0xff for data block
 			scf								; carry set for load
@@ -579,7 +579,7 @@ print_item_not_colour_modifier
 			jr c,print_item_expect_separator	; jump ahead if not found
 			call z,print_item_numeric		; if it's numeric, convert to a string
 			; we now have a string on top of the calculator stack
-			call calc_pop_aedcb		; fetch string parameters into AEDCB
+			call stk_fetch		; fetch string parameters into AEDCB
 			call print_string			; and print the string
 
 			; next character must be a separator or end of statement
@@ -637,8 +637,8 @@ print_item_semicolon
 			jr do_print_item			; otherwise, go back for more print items
 
 print_item_numeric
-			rst calc								; invoke calculator
-			db cc_strs, cc_endcalc	; to perform STR$ on the number on top of the stack
+			rst fp_calc								; invoke calculator
+			db cc_str_str, cc_end_calc	; to perform STR$ on the number on top of the stack
 			ret											; then return to deal with it as a string
 
 cmd_pause

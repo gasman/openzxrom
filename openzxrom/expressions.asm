@@ -67,7 +67,9 @@ num_or
 			call get_expr_2			; get right operand
 			call c,syntax_error	; syntax error if no expr found
 			call nz,syntax_error	; syntax error if operand is a string
-			; FIXME: perform OR op here
+			rst fp_calc			; perform OR operation
+			db cc_fn_or
+			db cc_end_calc
 			jr search_num_or			; return to look for further ORs
 			
 get_expr_2
@@ -95,7 +97,11 @@ num_and
 			call get_expr_4			; get right operand
 			call c,syntax_error		; syntax error if no expr found
 			call nz,syntax_error	; syntax error if right operand is a string
-			; FIXME: perform numeric AND op here
+
+			rst fp_calc			; perform AND operation
+			db cc_no_and_no
+			db cc_end_calc
+
 			jr search_num_and			; look for additional ANDs
 
 str_and
@@ -156,28 +162,39 @@ search_str_comparator
 			ret
 			
 num_equals
-			call get_num_comparator_operand
-			; FIXME: perform = op here
-			jr search_num_comparator
+			ld b,cc_nos_eql ; code for = operation
+			jr expr_num_comparison
 num_less_than
-			call get_num_comparator_operand
-			; FIXME: perform < op here
-			jr search_num_comparator
+			ld b,cc_no_less ; code for < operation
+			jr expr_num_comparison
 num_greater_than
-			call get_num_comparator_operand
-			; FIXME: perform > op here
-			jr search_num_comparator
+			ld b,cc_no_grtr ; code for > operation
+			jr expr_num_comparison
 num_less_equals
-			call get_num_comparator_operand
-			; FIXME: perform <= op here
-			jr search_num_comparator
+			ld b,cc_no_l_eql ; code for <= operation
+			jr expr_num_comparison
 num_greater_equals
-			call get_num_comparator_operand
-			; FIXME: perform >= op here
-			jr search_num_comparator
+			ld b,cc_no_gr_eql ; code for >= operation
+			jr expr_num_comparison
 num_not_equal
-			call get_num_comparator_operand
-			; FIXME: perform <> op here
+			ld b,cc_nos_neql ; code for <> operation
+			jr expr_num_comparison
+
+; perform a numeric comparison:
+; enter with the comparison calculator opcode in B.
+; Consumes the operator, fetches and validates right-hand expression,
+; performs the comparison and returns to search_num_comparator
+expr_num_comparison:
+			push bc
+			rst consume				; consume the operator token
+			call get_expr_5		; get right-hand expression
+			pop bc
+			call c,syntax_error	; die if it's missing
+			call nz,syntax_error	; die if it isn't numeric
+
+			rst fp_calc			; perform the comparison
+			db cc_calc_2
+			db cc_end_calc
 			jr search_num_comparator
 
 str_equals
@@ -211,6 +228,7 @@ get_num_comparator_operand
 			call c,syntax_error	; die if it's missing
 			call nz,syntax_error	; die if it isn't numeric
 			ret
+
 get_str_comparator_operand
 			rst consume				; consume the operator token
 			call get_expr_5		; get right-hand expression
@@ -244,7 +262,9 @@ num_plus
 			call get_expr_6					; fetch right-hand expression
 			call c,syntax_error				; die if right-hand expression is missing
 			call nz,syntax_error				; die if right-hand expression is a string
-			; FIXME: perform + op here
+			rst fp_calc						; perform + operation
+			db cc_addition
+			db cc_end_calc
 			jr search_num_sum_op
 			
 num_minus
@@ -252,7 +272,9 @@ num_minus
 			call get_expr_6					; fetch right-hand expression
 			call c,syntax_error				; die if right-hand expression is missing
 			call nz,syntax_error				; die if right-hand expression is a string			
-			; FIXME: perform - op here
+			rst fp_calc						; perform - operation
+			db cc_subtract
+			db cc_end_calc
 			jr search_num_sum_op
 
 str_concat
@@ -284,14 +306,18 @@ num_multiply
 			call get_expr_7
 			call c,syntax_error
 			call nz,syntax_error
-			; FIXME: perform * op here
+			rst fp_calc						; perform * operation
+			db cc_multiply
+			db cc_end_calc
 			jr search_num_product
 num_divide
 			rst consume
 			call get_expr_7
 			call c,syntax_error
 			call nz,syntax_error
-			; FIXME: perform / op here
+			rst fp_calc						; perform / operation
+			db cc_division
+			db cc_end_calc
 			jr search_num_product
 			
 get_expr_7
@@ -310,7 +336,9 @@ num_power
 			call get_expr_8
 			call c,syntax_error
 			call nz,syntax_error
-			; FIXME: perform ^ op here
+			rst fp_calc						; perform ^ operation
+			db cc_to_power
+			db cc_end_calc
 			jr search_num_power
 			
 get_unary_plus
@@ -379,7 +407,9 @@ get_num_unary_minus
 			call get_expr_8
 			call c, syntax_error
 			call nz,syntax_error
-			; FIXME: perform unary minus op here
+			rst fp_calc			; perform unary minus op
+			db cc_negate
+			db cc_end_calc
 			xor a								; signal successful fetch of numeric expression (carry reset, zero set)
 			ret
 
@@ -391,11 +421,11 @@ get_num_literal
 get_num_find_0e
 			cpi
 			jr nz,get_num_find_0e
-			ld de,(calc_stack_end)	; copy five bytes after the 0x0e
+			ld de,(stkend)	; copy five bytes after the 0x0e
 			ld bc,5					; to the end of the calculator stack
 				; TODO: check for out-of-memory condition
 			ldir
-			ld (calc_stack_end),de
+			ld (stkend),de
 			ld (interp_ptr),hl	; write interp_ptr back, now pointing to byte after numeric literal
 			call skip_whitespace	; advance interp_ptr past any trailing whitespace
 			xor a								; signal successful fetch of numeric expression (carry reset, zero set)
@@ -449,11 +479,36 @@ string_lit_to_heap_done
 			ld (interp_ptr),hl	; write back interp_ptr, now pointing to the byte after end of string
 			pop de  					; recall string address and length
 			pop bc
-			call calc_push_aedcb	; write string parameters onto calculator stack
+			call stk_store		; write string parameters onto calculator stack
 			call skip_whitespace	; advance interp_ptr past any trailing whitespace
 			or 1								; signal successful fetch of string expression (carry reset, zero reset)
 			ret
 
-err_out_of_memory
-			rst 0x0008
-			db 0x03		; error code for 'out of memory'
+; ---------------
+consume_bc
+; consume a numeric expression from interp_ptr and return it in bc,
+; triggering the appropriate error if expression is missing/invalid/string
+; or result is negative or >0xffff
+			call get_num_expr
+find_int
+; pop value from calculator stack into bc,
+; triggering the appropriate error if expression is missing/invalid
+; or result is negative or >0xffff
+			call fp_to_bc
+			jp c,err_out_of_range				; must be within 16 bits
+			jp nz,err_out_of_range				; must be positive
+			ret
+
+consume_a
+; consume a numeric expression from interp_ptr and return it in a,
+; triggering the appropriate error if expression is missing/invalid/string
+; or magnitude is >255. (Note: we allow negative values here, although
+; calling functions invariably ignore the sign bit...)
+			call get_num_expr
+calc_pop_a_validate
+; pop value from calculator stack into a,
+; triggering appropriate error if expression is missing/invalid
+; or magnitude is >255
+			call fp_to_a
+			jp c,err_out_of_range
+			ret

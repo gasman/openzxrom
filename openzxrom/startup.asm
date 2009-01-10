@@ -40,6 +40,7 @@ cold_start
 			ld bc,0x00a8						; copy 0x00a8 bytes of bitmaps
 			ldir										; perform the copy
 warm_start
+			ld iy,sysvars_base			; point IY here to allow indirect access to system vars
 			ld hl,(ramtop)
 			ld sp,hl
 			ld hl,0
@@ -52,11 +53,13 @@ warm_start
 			ld (perm_mask),a				; attributes are fully opaque
 			ld hl,font - 0x0100				; point to font bitmap
 			ld (font_ptr),hl
+			ld hl,membot					; set pointer to calculator memory area
+			ld (mem),hl
 			ld hl,prog_mem					; designate all memory from prog_mem
 			ld (vars_addr),hl				; as spare (i.e. set BASIC length to zero)
 			ld (workspace),hl
 			ld (calc_stack),hl
-			ld (calc_stack_end),hl
+			ld (stkend),hl
 			ld a,0x38						; set attributes to black on white
 			ld (perm_attribute),a
 			; TODO: establish exactly where we should copy perm_attribute to
