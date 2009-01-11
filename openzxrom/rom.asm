@@ -80,6 +80,14 @@ splash_text
 splash_text_end
 
 ; ---------------			
+			fillto 0x386e
+			; Free space in the original ROM, filled with 0xff.
+			; Frequently used as an interrupt table, so we shall aim to retain as much of
+			; this as possible. (At minimum we should retain the 0xff bytes at 0x**ff and
+			; 0x**00 - well-behaved hardware *should* always use these addresses for the
+			; jump address)
+			ds 0x3d00 - $, 0xff
+; ---------------			
 			fillto 0x3d00
 font
 			incbin "clairsys.bin"

@@ -112,3 +112,166 @@ cmd_plot
 			ld c,a
 			; TODO: store coords in system variable for use in DRAW
 			jr plot_bc				; now plot point at coords BC
+
+cmd_circle
+			; TODO: recognise modifiers - INK / PAPER / BRIGHT / FLASH / INVERSE / OVER
+			call consume_a	; fetch X coordinate
+			push af
+			rst nextchar
+			cp ','						; ensure that a comma follows
+			call nz,syntax_error
+			rst consume
+
+			call consume_a		; fetch Y coordinate
+			pop de			; now X coord is in D
+			ld e,a			; Y coord in E
+			push de
+			rst nextchar
+			cp ','						; ensure that a comma follows
+			call nz,syntax_error
+			rst consume
+
+			call consume_a		; fetch radius
+			push af
+			call assert_eos			; ensure that an end-of-statement follows
+			pop af
+
+			pop de						; recall X and Y coordinates into D and E
+			; continue directly into circle plotter routine
+
+; Circle routine
+; x^2+y^2=r^2 represents the real variable equation of a circle which is to be plotted using a
+;grid of discrete pixels where each pixel has integer coordinates.
+;   Note. original ROM circles are  slightly displaced to the right as noticed
+
+; enter with DE = x/y coordinates of centre, A = radius
+
+circle:	
+;Setup of parameters
+	ld h,0  ;H is x ; init to 0
+	ld l,a  ;L is y ; init to radius
+	
+	exx
+	cpl
+	ld c,a
+	ld b,$ff
+	inc bc     ;bc' is -radius
+	ld hl,1
+	add hl,bc
+	ex de,hl   ;de' is f=1-radius ; f error control
+	;and a
+	rl c
+	rl b       ;-2*radius
+	ld hl,5
+	add hl,bc  ;hl'  is ddfy =5-2*r
+	ld bc,3    ;bc' is  ddfx =3
+	exx
+
+;*************************************
+;*******Main circle procedure*********
+;*************************************
+
+circle_loop:	
+
+;*******Set 8 pixels, one for each circle's octant*********
+	ld A,D ;Point #1
+	add A,H
+	ld c,A
+	ld A,E
+	add A,L
+	ld b,A
+	call plot_noregs
+	
+	ld A,E ;Point #2
+	sub L
+	ld b,A
+	call plot_noregs
+	
+	ld A,D ;Point #4
+	sub H
+	ld c,A
+	call plot_noregs
+	
+	ld A,E ;Point #3
+	add A,L
+	ld b,A
+	call plot_noregs
+	
+	ld A,D ;Point #5
+	add A,L
+	ld c,A
+	ld A,E
+	add A,H
+	ld b,A
+	call plot_noregs
+	
+	ld A,E ;Point #6
+	sub H
+	ld b,A
+	call plot_noregs
+	
+	ld A,D ;Point #8
+	sub L
+	ld c,A
+	call plot_noregs
+	
+	ld A,E ;Point #7
+	add A,H
+	ld b,A
+	call plot_noregs
+
+;********Main logic***********	
+	ld a,h  ;H is x
+	cp l    ;L is y
+	ret nc   ;While  (y > x)
+
+		exx
+		bit 7,d  ;if f>0
+		;exx
+		jr nz,circle_fneg 
+
+			;exx
+
+		    ex de,hl
+			add hl,de
+			ex de,hl	
+
+			inc hl  ;hl' is ddfy 
+			inc hl
+	    	exx
+
+			dec l
+		    jr circle_fneg2	
+
+				;end if
+circle_fneg:
+		;exx
+
+		ex de,hl
+		add hl,bc
+		ex de,hl	
+		exx
+
+circle_fneg2:
+	             exx
+		inc bc   ;bc' is ddfx
+		inc bc 
+
+		inc hl
+	             inc hl
+		exx
+
+		inc h		;H is x
+
+    	jr circle_loop     ;end While
+
+; plot_bc with registers preserved
+plot_noregs:
+	push hl
+	push bc
+	push de
+	call plot_bc
+	pop de
+	pop bc
+	pop hl
+	ret

@@ -35,7 +35,7 @@ command_table
 			dw error_command	; MERGE
 			dw error_command	; VERIFY
 			dw error_command	; BEEP
-			dw error_command	; CIRCLE
+			dw cmd_circle	; CIRCLE
 			dw cmd_ink		; INK
 			dw cmd_paper	; PAPER
 			dw cmd_flash	; FLASH

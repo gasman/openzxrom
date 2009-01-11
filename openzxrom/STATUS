@@ -70,6 +70,7 @@ routines in the ZX ROM.
 
 BASIC commands supported
 ------------------------
+	CIRCLE
 	INK
 	PAPER
 	FLASH
@@ -90,7 +91,7 @@ BASIC commands supported
 	CLS
 	CLEAR
 BASIC commands not supported:
-	DEF FN, CAT, FORMAT, MOVE, ERASE, OPEN #, CLOSE #, MERGE, VERIFY, BEEP, CIRCLE,
+	DEF FN, CAT, FORMAT, MOVE, ERASE, OPEN #, CLOSE #, MERGE, VERIFY, BEEP,
 	INVERSE, OVER, LPRINT, LLIST, READ, DATA, RESTORE, CONTINUE, DIM, FOR, GO SUB,
 	INPUT, LIST, LET, NEXT, SAVE, IF, DRAW, RETURN, COPY
 	

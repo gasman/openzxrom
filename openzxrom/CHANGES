@@ -2,6 +2,9 @@ OpenZXRom xxxx-xx-xx
 - Calculator routines from the ZX81 ROM are incorporated. All pure numeric
   calculator operations and functions are now supported
 - Low-level beeper routine ('beeper')
+- Filled historical free space above 0x386e with 0xff, for programs which use
+  this as a vector table
+- CIRCLE command implemented ('cmd_circle' / 'circle')
 
 OpenZXRom 2008-01-07
 - Additional keyboard scanning / decoding routines: 'key_test' @ 0x031e and
