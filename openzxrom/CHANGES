@@ -5,6 +5,8 @@ OpenZXRom xxxx-xx-xx
 - Filled historical free space above 0x386e with 0xff, for programs which use
   this as a vector table
 - CIRCLE command implemented ('cmd_circle' / 'circle')
+- Default font is now zx81_ace.asm, a hybrid of the ZX81 and Jupiter Ace system
+  fonts
 
 OpenZXRom 2008-01-07
 - Additional keyboard scanning / decoding routines: 'key_test' @ 0x031e and
