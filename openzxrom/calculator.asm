@@ -23,26 +23,26 @@
 ; Postal address: The Hall, 9 Station Road, Waterbeach,
 ;                 Cambridge, CB25 9HT, England
 
-		fillto 0x2ab6
+	fillto 0x2ab6
 ;; STK-STO-$
 stk_store:
-        PUSH    BC              ;
-        CALL    test_5_sp       ; routine TEST-5-SP
-        POP     BC              ;
-        LD      HL,(stkend)     ; sv STKEND
-        LD      (HL),A          ;
-        INC     HL              ;
-        LD      (HL),E          ;
-        INC     HL              ;
-        LD      (HL),D          ;
-        INC     HL              ;
-        LD      (HL),C          ;
-        INC     HL              ;
-        LD      (HL),B          ;
-        INC     HL              ;
-        LD      (stkend),HL     ; sv STKEND
-        RES     6,(IY+iy_flags) ; update FLAGS - signal string result
-        RET                     ; return.
+	PUSH BC	;
+	CALL test_5_sp	; routine TEST-5-SP
+	POP BC	;
+	LD HL,(stkend)	; sv STKEND
+	LD (HL),A	;
+	INC HL	;
+	LD (HL),E	;
+	INC HL	;
+	LD (HL),D	;
+	INC HL	;
+	LD (HL),C	;
+	INC HL	;
+	LD (HL),B	;
+	INC HL	;
+	LD (stkend),HL	; sv STKEND
+	RES 6,(IY+iy_flags)	; update FLAGS - signal string result
+	RET	; return.
 
 ; --------------------------
 ; THE 'TEST ROOM' SUBROUTINE
@@ -53,20 +53,20 @@ stk_store:
 
 ;; TEST-ROOM
 test_room:
-        LD      HL,(stkend)     ; sv STKEND_lo
-        ADD     HL,BC           ;
-        JR      C,err_out_of_memory ; to REPORT-4
+	LD HL,(stkend)	; sv STKEND_lo
+	ADD HL,BC	;
+	JR C,err_out_of_memory	; to REPORT-4
 
-        EX      DE,HL           ;
-        LD      HL,$0024        ;
-        ADD     HL,DE           ;
-        SBC     HL,SP           ;
-        RET     C               ;
+	EX DE,HL	;
+	LD HL,$0024	;
+	ADD HL,DE	;
+	SBC HL,SP	;
+	RET C	;
 
 ;; REPORT-4
 err_out_of_memory
-        RST error
-        DB err_code_out_of_memory
+	RST error
+	DB err_code_out_of_memory
 
 
 ; --------------------------
@@ -79,34 +79,34 @@ err_out_of_memory
 ; For strings, the start of the string is in DE and the length in BC.
 ; A is unused.
 
-		fillto 0x2bf1
+	fillto 0x2bf1
 ;; STK-FETCH
 stk_fetch:
-        LD      HL,(stkend)      ; load HL from system variable STKEND
+	LD HL,(stkend)	; load HL from system variable STKEND
 
-        DEC     HL              ;
-        LD      B,(HL)          ;
-        DEC     HL              ;
-        LD      C,(HL)          ;
-        DEC     HL              ;
-        LD      D,(HL)          ;
-        DEC     HL              ;
-        LD      E,(HL)          ;
-        DEC     HL              ;
-        LD      A,(HL)          ;
+	DEC HL	;
+	LD B,(HL)	;
+	DEC HL	;
+	LD C,(HL)	;
+	DEC HL	;
+	LD D,(HL)	;
+	DEC HL	;
+	LD E,(HL)	;
+	DEC HL	;
+	LD A,(HL)	;
 
-        LD      (stkend),HL      ; set system variable STKEND to lower value.
-        RET                     ; return.
+	LD (stkend),HL	; set system variable STKEND to lower value.
+	RET	; return.
 
 ; ------------------------
 ; THE 'STACK-A' SUBROUTINE
 ; ------------------------
 ;
-        fillto 0x2d28
+	fillto 0x2d28
 ;; STACK-A
 stack_a:
-        LD      C,A             ;
-        LD      B,$00           ;
+	LD C,A	;
+	LD B,$00	;
 
 ; -------------------------
 ; THE 'STACK-BC' SUBROUTINE
@@ -120,39 +120,39 @@ stack_a:
 ; operation: DE points to the new stkend and HL points to the result.
 
 
-        fillto 0x2d2b
+	fillto 0x2d2b
 ;; STACK-BC
 stack_bc:
-        LD      IY,sysvars_base ; re-initialize the system variables pointer.
-        PUSH    BC              ; save the integer value.
+	LD IY,sysvars_base	; re-initialize the system variables pointer.
+	PUSH BC	; save the integer value.
 
 ; now stack zero, five zero bytes as a starting point.
 ; This also serves to place DE and HL into their desired final positions.
-        RST     28H             ;; FP-CALC
-        DEFB    cc_stk_zero     ;;stk-zero                      0.
-        DEFB    cc_end_calc     ;;end-calc
+	RST 28H	;; FP-CALC
+	DEFB cc_stk_zero	;;stk-zero                      0.
+	DEFB cc_end_calc	;;end-calc
 
-        POP     BC              ; restore integer value.
-        INC     HL
-        INC     HL
-        LD      (HL),C          ; write BC to 3rd and 4th bytes of the five
-        INC     HL
-        LD      (HL),B
-        DEC     HL              ; return HL to point to the exponent byte
-        DEC     HL
-        DEC     HL
-        RET
+	POP BC	; restore integer value.
+	INC HL
+	INC HL
+	LD (HL),C	; write BC to 3rd and 4th bytes of the five
+	INC HL
+	LD (HL),B
+	DEC HL	; return HL to point to the exponent byte
+	DEC HL
+	DEC HL
+	RET
 
 ; Convert two five-byte values (at DE and HL) to floating point
 conv_two_to_fp:
-        PUSH    HL
-        PUSH    DE
-        CALL    conv_to_fp      ; convert value at HL
-        POP     HL              ; now HL = old DE
-        CALL    conv_to_fp      ; convert value at old DE
-        POP     DE              ; now DE = old HL
-        EX      DE,HL           ; re-switch DE and HL
-        RET
+	PUSH HL
+	PUSH DE
+	CALL conv_to_fp	; convert value at HL
+	POP HL	; now HL = old DE
+	CALL conv_to_fp	; convert value at old DE
+	POP DE	; now DE = old HL
+	EX DE,HL	; re-switch DE and HL
+	RET
 
 ; ---------------------------------------
 ; THE 'CONVERT TO FLOATING POINT' ROUTINE
@@ -162,70 +162,70 @@ conv_two_to_fp:
 ; converts it to floating point.
 
 conv_to_fp:
-        LD      A,(HL)
-        OR      A               ; exit if first byte is nonzero -
-        RET     NZ              ; i.e. already floating point
-        
-        INC     HL              ; read sign byte into E and value into BC,
-        LD      E,(HL)          ; resetting to zero as we go
-        LD      (HL),A
-        INC     HL
-        LD      C,(HL)
-        LD      (HL),A
-        INC     HL
-        LD      B,(HL)
-        LD      (HL),A
-        DEC     HL              ; boldly assume that the last byte of the
-        DEC     HL              ; five is already zero
-        DEC     HL
-        CALL    get_bc_magnitude ; test sign byte and negate BC to obtain
-                                ; absolute value if necessary
-        EX      AF,AF'          ; store state of Z flag (reset if negative)
+	LD A,(HL)
+	OR A	; exit if first byte is nonzero -
+	RET NZ	; i.e. already floating point
+
+	INC HL	; read sign byte into E and value into BC,
+	LD E,(HL)	; resetting to zero as we go
+	LD (HL),A
+	INC HL
+	LD C,(HL)
+	LD (HL),A
+	INC HL
+	LD B,(HL)
+	LD (HL),A
+	DEC HL	; boldly assume that the last byte of the
+	DEC HL	; five is already zero
+	DEC HL
+	CALL get_bc_magnitude	; test sign byte and negate BC to obtain
+		; absolute value if necessary
+	EX AF,AF'	; store state of Z flag (reset if negative)
 
 ; Following code is repurposed from the ZX81's STACK-BC routine, which had to do
 ; the floating-point conversion because it didn't implement the special case for
 ; integers. Continuing with HL pointing to the first byte of the five, BC
 ; containing the integer magnitude:
 
-        LD      (HL),$91        ; place $91 in exponent         65536.
-                                ; this is the maximum possible value
+	LD (HL),$91	; place $91 in exponent         65536.
+		; this is the maximum possible value
 
-        LD      A,B             ; fetch hi-byte.
-        AND     A               ; test for zero.
-        JR      NZ,stk_bc_2     ; forward if not zero to STK-BC-2
+	LD A,B	; fetch hi-byte.
+	AND A	; test for zero.
+	JR NZ,stk_bc_2	; forward if not zero to STK-BC-2
 
-        LD      (HL),A          ; else make exponent zero again
-        OR      C               ; test lo-byte
-        RET     Z               ; return if BC was zero - done.
+	LD (HL),A	; else make exponent zero again
+	OR C	; test lo-byte
+	RET Z	; return if BC was zero - done.
 
 ; else  there has to be a set bit if only the value one.
 
-        LD      B,C             ; save C in B.
-        LD      C,(HL)          ; fetch zero to C
-        LD      (HL),$89        ; make exponent $89             256.
+	LD B,C	; save C in B.
+	LD C,(HL)	; fetch zero to C
+	LD (HL),$89	; make exponent $89             256.
 
 ;; STK-BC-2
 stk_bc_2:
-        DEC     (HL)            ; decrement exponent - halving number
-        SLA     C               ;  C<-76543210<-0
-        RL      B               ;  C<-76543210<-C
-        JR      NC,stk_bc_2     ; loop back if no carry to STK-BC-2
+	DEC (HL)	; decrement exponent - halving number
+	SLA C	;  C<-76543210<-0
+	RL B	;  C<-76543210<-C
+	JR NC,stk_bc_2	; loop back if no carry to STK-BC-2
 
-        SRL     B               ;  0->76543210->C
-        RR      C               ;  C->76543210->C
+	SRL B	;  0->76543210->C
+	RR C	;  C->76543210->C
 
-        INC     HL              ; address first byte of mantissa
-        EX      AF,AF'          ; recall Z flag for original sign bit
-        JR      Z,conv_fp_positive
-        SET     7,B             ; set top bit of B if negative
+	INC HL	; address first byte of mantissa
+	EX AF,AF'	; recall Z flag for original sign bit
+	JR Z,conv_fp_positive
+	SET 7,B	; set top bit of B if negative
 conv_fp_positive:
-        LD      (HL),B          ; insert B
-        INC     HL              ; address second byte of mantissa
-        LD      (HL),C          ; insert C
+	LD (HL),B	; insert B
+	INC HL	; address second byte of mantissa
+	LD (HL),C	; insert C
 
-        DEC     HL              ; point to the
-        DEC     HL              ; exponent again
-        RET                     ; return.
+	DEC HL	; point to the
+	DEC HL	; exponent again
+	RET	; return.
 
 
 ; -------------------------------------
@@ -235,44 +235,44 @@ conv_fp_positive:
 ; the BC register rounding up if necessary.
 ; Valid range is 0 to 65535.4999
 
-        fillto 0x2da2
+	fillto 0x2da2
 ;; FP-TO-BC
 fp_to_bc:
-        CALL    stk_fetch       ; routine STK-FETCH - exponent to A
-                                ; mantissa to EDCB.
-        AND     A               ; test for value zero.
-        JR      NZ,fpbc_nzro    ; forward if not to FPBC-NZRO
+	CALL stk_fetch	; routine STK-FETCH - exponent to A
+		; mantissa to EDCB.
+	AND A	; test for value zero.
+	JR NZ,fpbc_nzro	; forward if not to FPBC-NZRO
 
 ; else A is zero => number is an integer, stored in EDC
 ; where E = 0x00 for positive, 0xff for negative.
 ; (This case was not handled in the ZX81 ROM; additional code begins here)
 
-			ld b,c					; juggle registers to leave 16-bit result in BC
-			ld c,d
-			call get_bc_magnitude	; Negate BC (and reset zero flag) if E is 0xff,
-									; indicating a negative result
-			jr fpbc_int_end
-			
+	ld b,c	; juggle registers to leave 16-bit result in BC
+	ld c,d
+	call get_bc_magnitude	; Negate BC (and reset zero flag) if E is 0xff,
+		; indicating a negative result
+	jr fpbc_int_end
+
 ; Secondary entry point used by conv_to_fp.
 ; Enter with A=0. Negates BC and returns with Z flag reset iff E is nonzero.
 ; Preserves HL
 get_bc_magnitude
-			cp e					; check sign byte - 0x00 = positive, 0xff = negative
-			ret z					; if it's positive, exit with 16-bit value in bc,
-									; carry reset (no overflow), zero set (positive)
-			
-			xor a					; clear carry
-			push hl
-			ld hl,0x0000			; negate bc by subtracting from 0x0000
-			sbc hl,bc
-			ld b,h
-			ld c,l
-			pop hl
-			ccf						; this will always cause a carry unless bc was 0x0000,
-									; which equals -65536, which is the one case where we
-									; want to return a carry.
-			inc a					; reset zero flag to indicate negative result
-			ret
+	cp e	; check sign byte - 0x00 = positive, 0xff = negative
+	ret z	; if it's positive, exit with 16-bit value in bc,
+		; carry reset (no overflow), zero set (positive)
+
+	xor a	; clear carry
+	push hl
+	ld hl,0x0000	; negate bc by subtracting from 0x0000
+	sbc hl,bc
+	ld b,h
+	ld c,l
+	pop hl
+	ccf	; this will always cause a carry unless bc was 0x0000,
+		; which equals -65536, which is the one case where we
+		; want to return a carry.
+	inc a	; reset zero flag to indicate negative result
+	ret
 
 ; (end integer-handling code)
 
@@ -281,25 +281,25 @@ get_bc_magnitude
 ; ------------------------------------
 ;
 ;
-        fillto 0x2dd5
+	fillto 0x2dd5
 ;; FP-TO-A
 fp_to_a:
-        CALL    fp_to_bc        ; routine FP-TO-BC
-        RET     C               ;
+	CALL fp_to_bc	; routine FP-TO-BC
+	RET C	;
 
-        PUSH    AF              ;
-        DEC     B               ;
-        INC     B               ;
-        JR      Z,fp_a_end      ; forward if in range to FP-A-END
+	PUSH AF	;
+	DEC B	;
+	INC B	;
+	JR Z,fp_a_end	; forward if in range to FP-A-END
 
-        POP     AF              ; fetch result
-        SCF                     ; set carry flag signaling overflow
-        RET                     ; return
+	POP AF	; fetch result
+	SCF	; set carry flag signaling overflow
+	RET	; return
 
 ;; FP-A-END
 fp_a_end:
-        POP     AF              ;
-        RET                     ;
+	POP AF	;
+	RET	;
 
 ; ---
 
@@ -307,80 +307,80 @@ fp_a_end:
 
 ;; FPBC-NZRO
 fpbc_nzro:
-        LD      B,E             ; transfer the mantissa from EDCB
-        LD      E,C             ; to BCE. Bit 7 of E is the 17th bit which
-        LD      C,D             ; will be significant for rounding if the
-                                ; number is already normalized.
+	LD B,E	; transfer the mantissa from EDCB
+	LD E,C	; to BCE. Bit 7 of E is the 17th bit which
+	LD C,D	; will be significant for rounding if the
+		; number is already normalized.
 
-        SUB     $91             ; subtract 65536
-        CCF                     ; complement carry flag
-        BIT     7,B             ; test sign bit
-        PUSH    AF              ; push the result
+	SUB $91	; subtract 65536
+	CCF	; complement carry flag
+	BIT 7,B	; test sign bit
+	PUSH AF	; push the result
 
-        SET     7,B             ; set the implied bit
-        JR      C,fpbc_end      ; forward with carry from SUB/CCF to FPBC-END
-                                ; number is too big.
+	SET 7,B	; set the implied bit
+	JR C,fpbc_end	; forward with carry from SUB/CCF to FPBC-END
+		; number is too big.
 
-        INC     A               ; increment the exponent and
-        NEG                     ; negate to make range $00 - $0F
+	INC A	; increment the exponent and
+	NEG	; negate to make range $00 - $0F
 
-        CP      $08             ; test if one or two bytes
-        JR      C,big_int       ; forward with two to BIG-INT
+	CP $08	; test if one or two bytes
+	JR C,big_int	; forward with two to BIG-INT
 
-        LD      E,C             ; shift mantissa
-        LD      C,B             ; 8 places right
-        LD      B,$00           ; insert a zero in B
-        SUB     $08             ; reduce exponent by eight
+	LD E,C	; shift mantissa
+	LD C,B	; 8 places right
+	LD B,$00	; insert a zero in B
+	SUB $08	; reduce exponent by eight
 
 ;; BIG-INT
 big_int:
-        AND     A               ; test the exponent
-        LD      D,A             ; save exponent in D.
+	AND A	; test the exponent
+	LD D,A	; save exponent in D.
 
-        LD      A,E             ; fractional bits to A
-        RLCA                    ; rotate most significant bit to carry for
-                                ; rounding of an already normal number.
+	LD A,E	; fractional bits to A
+	RLCA	; rotate most significant bit to carry for
+		; rounding of an already normal number.
 
-        JR      Z,exp_zero      ; forward if exponent zero to EXP-ZERO
-                                ; the number is normalized
+	JR Z,exp_zero	; forward if exponent zero to EXP-ZERO
+		; the number is normalized
 
 ;; FPBC-NORM
 fpbc_norm:
-        SRL     B               ;   0->76543210->C
-        RR      C               ;   C->76543210->C
+	SRL B	;   0->76543210->C
+	RR C	;   C->76543210->C
 
-        DEC     D               ; decrement exponent
+	DEC D	; decrement exponent
 
-        JR      NZ,fpbc_norm    ; loop back till zero to FPBC-NORM
+	JR NZ,fpbc_norm	; loop back till zero to FPBC-NORM
 
 ;; EXP-ZERO
 exp_zero:
-        JR      NC,fpbc_end     ; forward without carry to NO-ROUND
+	JR NC,fpbc_end	; forward without carry to NO-ROUND
 
-        INC     BC              ; round up.
-        LD      A,B             ; test result
-        OR      C               ; for zero
-        JR      NZ,fpbc_end     ; forward if not to GRE-ZERO
+	INC BC	; round up.
+	LD A,B	; test result
+	OR C	; for zero
+	JR NZ,fpbc_end	; forward if not to GRE-ZERO
 
-        POP     AF              ; restore sign flag
-        SCF                     ; set carry flag to indicate overflow
+	POP AF	; restore sign flag
+	SCF	; set carry flag to indicate overflow
 fpbc_int_end:
-        PUSH    AF              ; save combined flags again
+	PUSH AF	; save combined flags again
 
 ;; FPBC-END
 fpbc_end:
-        PUSH    BC              ; save BC value
+	PUSH BC	; save BC value
 
 ; set HL and DE to calculator stack pointers.
 
-        RST     fp_calc         ;; FP-CALC
-        DEFB    cc_end_calc     ;;end-calc
+	RST fp_calc	;; FP-CALC
+	DEFB cc_end_calc	;;end-calc
 
 
-        POP     BC              ; restore BC value
-        POP     AF              ; restore flags
-        LD      A,C             ; copy low byte to A also.
-        RET                     ; return
+	POP BC	; restore BC value
+	POP AF	; restore flags
+	LD A,C	; copy low byte to A also.
+	RET	; return
 
 ; -------------------------------
 ; THE 'PREPARE TO ADD' SUBROUTINE
@@ -398,43 +398,43 @@ fpbc_end:
 
 ;; PREP-ADD
 prep_add:
-        LD      A,(HL)          ; fetch exponent.
-        LD      (HL),$00        ; make this byte zero to take any overflow and
-                                ; default to positive.
-        AND     A               ; test stored exponent for zero.
-        RET     Z               ; return with zero flag set if number is zero.
+	LD A,(HL)	; fetch exponent.
+	LD (HL),$00	; make this byte zero to take any overflow and
+		; default to positive.
+	AND A	; test stored exponent for zero.
+	RET Z	; return with zero flag set if number is zero.
 
-        INC     HL              ; point to first byte of mantissa.
-        BIT     7,(HL)          ; test the sign bit.
-        SET     7,(HL)          ; set it to its implied state.
-        DEC     HL              ; set pointer to first byte again.
-        RET     Z               ; return if bit indicated number is positive.>>
+	INC HL	; point to first byte of mantissa.
+	BIT 7,(HL)	; test the sign bit.
+	SET 7,(HL)	; set it to its implied state.
+	DEC HL	; set pointer to first byte again.
+	RET Z	; return if bit indicated number is positive.>>
 
 ; if negative then all five bytes are twos complemented starting at LSB.
 
-        PUSH    BC              ; save B register contents.
-        LD      BC,$0005        ; set BC to five.
-        ADD     HL,BC           ; point to location after 5th byte.
-        LD      B,C             ; set the B counter to five.
-        LD      C,A             ; store original exponent in C.
-        SCF                     ; set carry flag so that one is added.
+	PUSH BC	; save B register contents.
+	LD BC,$0005	; set BC to five.
+	ADD HL,BC	; point to location after 5th byte.
+	LD B,C	; set the B counter to five.
+	LD C,A	; store original exponent in C.
+	SCF	; set carry flag so that one is added.
 
 ; now enter a loop to twos-complement the number.
 ; The first of the five bytes becomes $FF to denote a negative number.
 
 ;; NEG-BYTE
 neg_byte:
-        DEC     HL              ; point to first or more significant byte.
-        LD      A,(HL)          ; fetch to accumulator.
-        CPL                     ; complement.
-        ADC     A,$00           ; add in initial carry or any subsequent carry.
-        LD      (HL),A          ; place number back.
-        DJNZ    neg_byte           ; loop back five times to NEG-BYTE
+	DEC HL	; point to first or more significant byte.
+	LD A,(HL)	; fetch to accumulator.
+	CPL	; complement.
+	ADC A,$00	; add in initial carry or any subsequent carry.
+	LD (HL),A	; place number back.
+	DJNZ neg_byte	; loop back five times to NEG-BYTE
 
-        LD      A,C             ; restore the exponent to accumulator.
-        POP     BC              ; restore B register contents.
+	LD A,C	; restore the exponent to accumulator.
+	POP BC	; restore B register contents.
 
-        RET                     ; return.
+	RET	; return.
 
 ; ----------------------------------
 ; THE 'FETCH TWO NUMBERS' SUBROUTINE
@@ -455,51 +455,51 @@ neg_byte:
 
 ;; FETCH-TWO
 fetch_two:
-        PUSH    HL              ; save HL 
-        PUSH    AF              ; save A - result sign when used from division.
+	PUSH HL	; save HL
+	PUSH AF	; save A - result sign when used from division.
 
-        LD      C,(HL)          ;
-        INC     HL              ;
-        LD      B,(HL)          ;
-        LD      (HL),A          ; insert sign when used from multiplication.
-        INC     HL              ;
-        LD      A,C             ; m1
-        LD      C,(HL)          ;
-        PUSH    BC              ; PUSH m2 m3
+	LD C,(HL)	;
+	INC HL	;
+	LD B,(HL)	;
+	LD (HL),A	; insert sign when used from multiplication.
+	INC HL	;
+	LD A,C	; m1
+	LD C,(HL)	;
+	PUSH BC	; PUSH m2 m3
 
-        INC     HL              ;
-        LD      C,(HL)          ; m4
-        INC     HL              ;
-        LD      B,(HL)          ; m5  BC holds m5 m4
+	INC HL	;
+	LD C,(HL)	; m4
+	INC HL	;
+	LD B,(HL)	; m5  BC holds m5 m4
 
-        EX      DE,HL           ; make HL point to start of second number.
+	EX DE,HL	; make HL point to start of second number.
 
-        LD      D,A             ; m1
-        LD      E,(HL)          ;
-        PUSH    DE              ; PUSH m1 n1
+	LD D,A	; m1
+	LD E,(HL)	;
+	PUSH DE	; PUSH m1 n1
 
-        INC     HL              ;
-        LD      D,(HL)          ;
-        INC     HL              ;
-        LD      E,(HL)          ;
-        PUSH    DE              ; PUSH n2 n3
+	INC HL	;
+	LD D,(HL)	;
+	INC HL	;
+	LD E,(HL)	;
+	PUSH DE	; PUSH n2 n3
 
-        EXX                     ; - - - - - - -
+	EXX	; - - - - - - -
 
-        POP     DE              ; POP n2 n3
-        POP     HL              ; POP m1 n1
-        POP     BC              ; POP m2 m3
+	POP DE	; POP n2 n3
+	POP HL	; POP m1 n1
+	POP BC	; POP m2 m3
 
-        EXX                     ; - - - - - - -
+	EXX	; - - - - - - -
 
-        INC     HL              ;
-        LD      D,(HL)          ;
-        INC     HL              ;
-        LD      E,(HL)          ; DE holds n4 n5
+	INC HL	;
+	LD D,(HL)	;
+	INC HL	;
+	LD E,(HL)	; DE holds n4 n5
 
-        POP     AF              ; restore saved
-        POP     HL              ; registers.
-        RET                     ; return.
+	POP AF	; restore saved
+	POP HL	; registers.
+	RET	; return.
 
 ; -----------------------------
 ; THE 'SHIFT ADDEND' SUBROUTINE
@@ -509,36 +509,36 @@ fetch_two:
 
 ;; SHIFT-FP
 shift_fp:
-        AND     A               ; test difference between exponents.
-        RET     Z               ; return if zero. both normal.
+	AND A	; test difference between exponents.
+	RET Z	; return if zero. both normal.
 
-        CP      $21             ; compare with 33 bits.
-        JR      NC,addend_0     ; forward if greater than 32 to ADDEND-0
+	CP $21	; compare with 33 bits.
+	JR NC,addend_0	; forward if greater than 32 to ADDEND-0
 
-        PUSH    BC              ; preserve BC - part 
-        LD      B,A             ; shift counter to B.
+	PUSH BC	; preserve BC - part
+	LD B,A	; shift counter to B.
 
 ; Now perform B right shifts on the addend  L'D'E'D E
 ; to bring it into line with the augend     H'B'C'C B
 
 ;; ONE-SHIFT
 one_shift:
-        EXX                     ; - - -
-        SRA     L               ;    76543210->C    bit 7 unchanged.
-        RR      D               ; C->76543210->C
-        RR      E               ; C->76543210->C
-        EXX                     ; - - - 
-        RR      D               ; C->76543210->C
-        RR      E               ; C->76543210->C
-        DJNZ    one_shift       ; loop back B times to ONE-SHIFT
+	EXX	; - - -
+	SRA L	;    76543210->C    bit 7 unchanged.
+	RR D	; C->76543210->C
+	RR E	; C->76543210->C
+	EXX	; - - -
+	RR D	; C->76543210->C
+	RR E	; C->76543210->C
+	DJNZ one_shift	; loop back B times to ONE-SHIFT
 
-        POP     BC              ; restore BC
-        RET     NC              ; return if last shift produced no carry.   >>
+	POP BC	; restore BC
+	RET NC	; return if last shift produced no carry.   >>
 
 ; if carry flag was set then accuracy is being lost so round up the addend.
 
-        CALL    add_back        ; routine ADD-BACK
-        RET     NZ              ; return if not FF 00 00 00 00
+	CALL add_back	; routine ADD-BACK
+	RET NZ	; return if not FF 00 00 00 00
 
 ; this branch makes all five bytes of the addend zero and is made during
 ; addition when the exponents are too far apart for the addend bits to 
@@ -546,9 +546,9 @@ one_shift:
 
 ;; ADDEND-0
 addend_0:
-        EXX                     ; select alternate set for more significant 
-                                ; bytes.
-        XOR     A               ; clear accumulator.
+	EXX	; select alternate set for more significant
+		; bytes.
+	XOR A	; clear accumulator.
 
 
 ; this entry point (from multiplication) sets four of the bytes to zero or if 
@@ -556,12 +556,12 @@ addend_0:
 
 ;; ZEROS-4/5
 zeros_4_5:
-        LD      L,$00           ; set byte 1 to zero.
-        LD      D,A             ; set byte 2 to A.
-        LD      E,L             ; set byte 3 to zero.
-        EXX                     ; select main set 
-        LD      DE,$0000        ; set lower bytes 4 and 5 to zero.
-        RET                     ; return.
+	LD L,$00	; set byte 1 to zero.
+	LD D,A	; set byte 2 to A.
+	LD E,L	; set byte 3 to zero.
+	EXX	; select main set
+	LD DE,$0000	; set lower bytes 4 and 5 to zero.
+	RET	; return.
 
 ; -------------------------
 ; THE 'ADD-BACK' SUBROUTINE
@@ -578,22 +578,22 @@ zeros_4_5:
 
 ;; ADD-BACK
 add_back:
-        INC     E               ;
-        RET     NZ              ;
+	INC E	;
+	RET NZ	;
 
-        INC     D               ;
-        RET     NZ              ;
+	INC D	;
+	RET NZ	;
 
-        EXX                     ;
-        INC     E               ;
-        JR      NZ,all_added    ; forward if no overflow to ALL-ADDED
+	EXX	;
+	INC E	;
+	JR NZ,all_added	; forward if no overflow to ALL-ADDED
 
-        INC     D               ;
+	INC D	;
 
 ;; ALL-ADDED
 all_added:
-        EXX                     ;
-        RET                     ; return with zero flag set for zero mantissa.
+	EXX	;
+	RET	; return with zero flag set for zero mantissa.
 
 ; ---------------------------
 ; THE 'SUBTRACTION' OPERATION
@@ -602,18 +602,18 @@ all_added:
 
 ;; subtract
 subtract:
-        CALL    conv_two_to_fp  ; ensure both values are floating-point.
-        LD      A,(DE)          ; fetch exponent byte of second number the
-                                ; subtrahend. 
-        AND     A               ; test for zero
-        RET     Z               ; return if zero - first number is result.
+	CALL conv_two_to_fp	; ensure both values are floating-point.
+	LD A,(DE)	; fetch exponent byte of second number the
+		; subtrahend.
+	AND A	; test for zero
+	RET Z	; return if zero - first number is result.
 
-        INC     DE              ; address the first mantissa byte.
-        LD      A,(DE)          ; fetch to accumulator.
-        XOR     $80             ; toggle the sign bit.
-        LD      (DE),A          ; place back on calculator stack.
-        DEC     DE              ; point to exponent byte.
-        JR      addition_fp     ; continue into addition routine.
+	INC DE	; address the first mantissa byte.
+	LD A,(DE)	; fetch to accumulator.
+	XOR $80	; toggle the sign bit.
+	LD (DE),A	; place back on calculator stack.
+	DEC DE	; point to exponent byte.
+	JR addition_fp	; continue into addition routine.
 
 ; ------------------------
 ; THE 'ADDITION' OPERATION
@@ -625,66 +625,66 @@ subtract:
 
 ;; addition
 addition:
-        CALL    conv_two_to_fp  ; ensure both values are floating-point.
+	CALL conv_two_to_fp	; ensure both values are floating-point.
 addition_fp:
-        EXX                     ; - - -
-        PUSH    HL              ; save the pointer to the next literal.
-        EXX                     ; - - -
+	EXX	; - - -
+	PUSH HL	; save the pointer to the next literal.
+	EXX	; - - -
 
-        PUSH    DE              ; save pointer to second number
-        PUSH    HL              ; save pointer to first number - will be the
-                                ; result pointer on calculator stack.
+	PUSH DE	; save pointer to second number
+	PUSH HL	; save pointer to first number - will be the
+		; result pointer on calculator stack.
 
-        CALL    prep_add        ; routine PREP-ADD
-        LD      B,A             ; save first exponent byte in B.
-        EX      DE,HL           ; switch number pointers.
-        CALL    prep_add        ; routine PREP-ADD
-        LD      C,A             ; save second exponent byte in C.
-        CP      B               ; compare the exponent bytes.
-        JR      NC,shift_len    ; forward if second higher to SHIFT-LEN
+	CALL prep_add	; routine PREP-ADD
+	LD B,A	; save first exponent byte in B.
+	EX DE,HL	; switch number pointers.
+	CALL prep_add	; routine PREP-ADD
+	LD C,A	; save second exponent byte in C.
+	CP B	; compare the exponent bytes.
+	JR NC,shift_len	; forward if second higher to SHIFT-LEN
 
-        LD      A,B             ; else higher exponent to A
-        LD      B,C             ; lower exponent to B
-        EX      DE,HL           ; switch the number pointers.
+	LD A,B	; else higher exponent to A
+	LD B,C	; lower exponent to B
+	EX DE,HL	; switch the number pointers.
 
 ;; SHIFT-LEN
 shift_len:
-        PUSH    AF              ; save higher exponent
-        SUB     B               ; subtract lower exponent
+	PUSH AF	; save higher exponent
+	SUB B	; subtract lower exponent
 
-        CALL    fetch_two       ; routine FETCH-TWO
-        CALL    shift_fp        ; routine SHIFT-FP
+	CALL fetch_two	; routine FETCH-TWO
+	CALL shift_fp	; routine SHIFT-FP
 
-        POP     AF              ; restore higher exponent.
-        POP     HL              ; restore result pointer.
-        LD      (HL),A          ; insert exponent byte.
-        PUSH    HL              ; save result pointer again.
+	POP AF	; restore higher exponent.
+	POP HL	; restore result pointer.
+	LD (HL),A	; insert exponent byte.
+	PUSH HL	; save result pointer again.
 
 ; now perform the 32-bit addition using two 16-bit Z80 add instructions.
 
-        LD      L,B             ; transfer low bytes of mantissa individually
-        LD      H,C             ; to HL register
+	LD L,B	; transfer low bytes of mantissa individually
+	LD H,C	; to HL register
 
-        ADD     HL,DE           ; the actual binary addition of lower bytes
+	ADD HL,DE	; the actual binary addition of lower bytes
 
 ; now the two higher byte pairs that are in the alternate register sets.
 
-        EXX                     ; switch in set 
-        EX      DE,HL           ; transfer high mantissa bytes to HL register.
+	EXX	; switch in set
+	EX DE,HL	; transfer high mantissa bytes to HL register.
 
-        ADC     HL,BC           ; the actual addition of higher bytes with
-                                ; any carry from first stage.
+	ADC HL,BC	; the actual addition of higher bytes with
+		; any carry from first stage.
 
-        EX      DE,HL           ; result in DE, sign bytes ($FF or $00) to HL
+	EX DE,HL	; result in DE, sign bytes ($FF or $00) to HL
 
 ; now consider the two sign bytes
 
-        LD      A,H             ; fetch sign byte of num1
+	LD A,H	; fetch sign byte of num1
 
-        ADC     A,L             ; add including any carry from mantissa 
-                                ; addition. 00 or 01 or FE or FF
+	ADC A,L	; add including any carry from mantissa
+		; addition. 00 or 01 or FE or FF
 
-        LD      L,A             ; result in L.
+	LD L,A	; result in L.
 
 ; possible outcomes of signs and overflow from mantissa are
 ;
@@ -697,96 +697,96 @@ shift_len:
 ; FF + 00         = FF    FF   00
 ; FF + 00 + carry = 00 C  80   80
 
-        RRA                     ; C->76543210->C
-        XOR     L               ; set bit 0 if shifting required.
+	RRA	; C->76543210->C
+	XOR L	; set bit 0 if shifting required.
 
-        EXX                     ; switch back to main set
-        EX      DE,HL           ; full mantissa result now in D'E'D E registers.
-        POP     HL              ; restore pointer to result exponent on 
-                                ; the calculator stack.
+	EXX	; switch back to main set
+	EX DE,HL	; full mantissa result now in D'E'D E registers.
+	POP HL	; restore pointer to result exponent on
+		; the calculator stack.
 
-        RRA                     ; has overflow occurred ?
-        JR      NC,test_neg     ; skip forward if not to TEST-NEG
+	RRA	; has overflow occurred ?
+	JR NC,test_neg	; skip forward if not to TEST-NEG
 
 ; if the addition of two positive mantissas produced overflow or if the
 ; addition of two negative mantissas did not then the result exponent has to
 ; be incremented and the mantissa shifted one place to the right.
 
-        LD      A,$01           ; one shift required.
-        CALL    shift_fp        ; routine SHIFT-FP performs a single shift 
-                                ; rounding any lost bit
-        INC     (HL)            ; increment the exponent.
-        JR      Z,add_rep_6     ; forward to ADD-REP-6 if the exponent
-                                ; wraps round from FF to zero as number is too
-                                ; big for the system.
+	LD A,$01	; one shift required.
+	CALL shift_fp	; routine SHIFT-FP performs a single shift
+		; rounding any lost bit
+	INC (HL)	; increment the exponent.
+	JR Z,add_rep_6	; forward to ADD-REP-6 if the exponent
+		; wraps round from FF to zero as number is too
+		; big for the system.
 
 ; at this stage the exponent on the calculator stack is correct.
 
 ;; TEST-NEG
 test_neg:
-        EXX                     ; switch in the alternate set.
-        LD      A,L             ; load result sign to accumulator.
-        AND     $80             ; isolate bit 7 from sign byte setting zero
-                                ; flag if positive.
-        EXX                     ; back to main set.
+	EXX	; switch in the alternate set.
+	LD A,L	; load result sign to accumulator.
+	AND $80	; isolate bit 7 from sign byte setting zero
+		; flag if positive.
+	EXX	; back to main set.
 
-        INC     HL              ; point to first byte of mantissa
-        LD      (HL),A          ; insert $00 positive or $80 negative at 
-                                ; position on calculator stack.
+	INC HL	; point to first byte of mantissa
+	LD (HL),A	; insert $00 positive or $80 negative at
+		; position on calculator stack.
 
-        DEC     HL              ; point to exponent again.
-        JR      Z,go_nc_mlt     ; forward if positive to GO-NC-MLT
+	DEC HL	; point to exponent again.
+	JR Z,go_nc_mlt	; forward if positive to GO-NC-MLT
 
 ; a negative number has to be twos-complemented before being placed on stack.
 
-        LD      A,E             ; fetch lowest (rightmost) mantissa byte.
-        NEG                     ; Negate
-        CCF                     ; Complement Carry Flag
-        LD      E,A             ; place back in register
+	LD A,E	; fetch lowest (rightmost) mantissa byte.
+	NEG	; Negate
+	CCF	; Complement Carry Flag
+	LD E,A	; place back in register
 
-        LD      A,D             ; ditto
-        CPL                     ;
-        ADC     A,$00           ;
-        LD      D,A             ;
+	LD A,D	; ditto
+	CPL	;
+	ADC A,$00	;
+	LD D,A	;
 
-        EXX                     ; switch to higher (leftmost) 16 bits.
+	EXX	; switch to higher (leftmost) 16 bits.
 
-        LD      A,E             ; ditto
-        CPL                     ;
-        ADC     A,$00           ;
-        LD      E,A             ;
+	LD A,E	; ditto
+	CPL	;
+	ADC A,$00	;
+	LD E,A	;
 
-        LD      A,D             ; ditto
-        CPL                     ;
-        ADC     A,$00           ;
-        JR      NC,end_compl    ; forward without overflow to END-COMPL
+	LD A,D	; ditto
+	CPL	;
+	ADC A,$00	;
+	JR NC,end_compl	; forward without overflow to END-COMPL
 
 ; else entire mantissa is now zero.  00 00 00 00
 
-        RRA                     ; set mantissa to 80 00 00 00
-        EXX                     ; switch.
-        INC     (HL)            ; increment the exponent.
+	RRA	; set mantissa to 80 00 00 00
+	EXX	; switch.
+	INC (HL)	; increment the exponent.
 
 ;; ADD-REP-6
 add_rep_6:
-        JP      Z,err_number_too_big ; jump forward if exponent now zero to REPORT-6
-                                ; 'Number too big'
+	JP Z,err_number_too_big	; jump forward if exponent now zero to REPORT-6
+		; 'Number too big'
 
-        EXX                     ; switch back to alternate set.
+	EXX	; switch back to alternate set.
 
 ;; END-COMPL
 end_compl:
-        LD      D,A             ; put first byte of mantissa back in DE.
-        EXX                     ; switch to main set.
+	LD D,A	; put first byte of mantissa back in DE.
+	EXX	; switch to main set.
 
 ;; GO-NC-MLT
 go_nc_mlt:
-        XOR     A               ; clear carry flag and
-                                ; clear accumulator so no extra bits carried
-                                ; forward as occurs in multiplication.
+	XOR A	; clear carry flag and
+		; clear accumulator so no extra bits carried
+		; forward as occurs in multiplication.
 
-        JR      test_norm       ; forward to common code at TEST-NORM 
-                                ; but should go straight to NORMALIZE.
+	JR test_norm	; forward to common code at TEST-NORM
+		; but should go straight to NORMALIZE.
 
 ; ----------------------------------------------
 ; THE 'PREPARE TO MULTIPLY OR DIVIDE' SUBROUTINE
@@ -798,16 +798,16 @@ go_nc_mlt:
 
 ;; PREP-M/D
 prep_m_d:
-        SCF                     ; set carry flag to signal number is zero.
-        DEC     (HL)            ; test exponent
-        INC     (HL)            ; for zero.
-        RET     Z               ; return if zero with carry flag set.
+	SCF	; set carry flag to signal number is zero.
+	DEC (HL)	; test exponent
+	INC (HL)	; for zero.
+	RET Z	; return if zero with carry flag set.
 
-        INC     HL              ; address first mantissa byte.
-        XOR     (HL)            ; exclusive or the running sign bit.
-        SET     7,(HL)          ; set the implied bit.
-        DEC     HL              ; point to exponent byte.
-        RET                     ; return.
+	INC HL	; address first mantissa byte.
+	XOR (HL)	; exclusive or the running sign bit.
+	SET 7,(HL)	; set the implied bit.
+	DEC HL	; point to exponent byte.
+	RET	; return.
 
 ; ------------------------------
 ; THE 'MULTIPLICATION' OPERATION
@@ -817,46 +817,46 @@ prep_m_d:
 
 ;; multiply
 multiply:
-        CALL    conv_two_to_fp  ; ensure both values are floating-point.
-        XOR     A               ; reset bit 7 of running sign flag.
-        CALL    prep_m_d        ; routine PREP-M/D
-        RET     C               ; return if number is zero.
-                                ; zero * anything = zero.
+	CALL conv_two_to_fp	; ensure both values are floating-point.
+	XOR A	; reset bit 7 of running sign flag.
+	CALL prep_m_d	; routine PREP-M/D
+	RET C	; return if number is zero.
+		; zero * anything = zero.
 
-        EXX                     ; - - -
-        PUSH    HL              ; save pointer to 'next literal'
-        EXX                     ; - - -
+	EXX	; - - -
+	PUSH HL	; save pointer to 'next literal'
+	EXX	; - - -
 
-        PUSH    DE              ; save pointer to second number 
+	PUSH DE	; save pointer to second number
 
-        EX      DE,HL           ; make HL address second number.
+	EX DE,HL	; make HL address second number.
 
-        CALL    prep_m_d        ; routine PREP-M/D
+	CALL prep_m_d	; routine PREP-M/D
 
-        EX      DE,HL           ; HL first number, DE - second number
-        JR      C,zero_rslt     ; forward with carry to ZERO-RSLT
-                                ; anything * zero = zero.
+	EX DE,HL	; HL first number, DE - second number
+	JR C,zero_rslt	; forward with carry to ZERO-RSLT
+		; anything * zero = zero.
 
-        PUSH    HL              ; save pointer to first number.
+	PUSH HL	; save pointer to first number.
 
-        CALL    fetch_two       ; routine FETCH-TWO fetches two mantissas from
-                                ; calc stack to B'C'C,B  D'E'D E
-                                ; (HL will be overwritten but the result sign
-                                ; in A is inserted on the calculator stack)
+	CALL fetch_two	; routine FETCH-TWO fetches two mantissas from
+		; calc stack to B'C'C,B  D'E'D E
+		; (HL will be overwritten but the result sign
+		; in A is inserted on the calculator stack)
 
-        LD      A,B             ; transfer low mantissa byte of first number
-        AND     A               ; clear carry.
-        SBC     HL,HL           ; a short form of LD HL,$0000 to take lower
-                                ; two bytes of result. (2 program bytes)
-        EXX                     ; switch in alternate set
-        PUSH    HL              ; preserve HL
-        SBC     HL,HL           ; set HL to zero also to take higher two bytes
-                                ; of the result and clear carry.
-        EXX                     ; switch back.
+	LD A,B	; transfer low mantissa byte of first number
+	AND A	; clear carry.
+	SBC HL,HL	; a short form of LD HL,$0000 to take lower
+		; two bytes of result. (2 program bytes)
+	EXX	; switch in alternate set
+	PUSH HL	; preserve HL
+	SBC HL,HL	; set HL to zero also to take higher two bytes
+		; of the result and clear carry.
+	EXX	; switch back.
 
-        LD      B,$21           ; register B can now be used to count thirty 
-                                ; three shifts.
-        JR      strt_mlt        ; forward to loop entry point STRT-MLT
+	LD B,$21	; register B can now be used to count thirty
+		; three shifts.
+	JR strt_mlt	; forward to loop entry point STRT-MLT
 
 ; ---
 
@@ -864,123 +864,123 @@ multiply:
 
 ;; MLT-LOOP
 mlt_loop:
-        JR      NC,no_add       ; forward if no carry to NO-ADD
+	JR NC,no_add	; forward if no carry to NO-ADD
 
-                                ; else add in the multiplicand.
+		; else add in the multiplicand.
 
-        ADD     HL,DE           ; add the two low bytes to result
-        EXX                     ; switch to more significant bytes.
-        ADC     HL,DE           ; add high bytes of multiplicand and any carry.
-        EXX                     ; switch to main set.
+	ADD HL,DE	; add the two low bytes to result
+	EXX	; switch to more significant bytes.
+	ADC HL,DE	; add high bytes of multiplicand and any carry.
+	EXX	; switch to main set.
 
 ; in either case shift result right into B'C'C A
 
 ;; NO-ADD
 no_add:
-        EXX                     ; switch to alternate set
-        RR      H               ; C > 76543210 > C
-        RR      L               ; C > 76543210 > C
-        EXX                     ;
-        RR      H               ; C > 76543210 > C
-        RR      L               ; C > 76543210 > C
+	EXX	; switch to alternate set
+	RR H	; C > 76543210 > C
+	RR L	; C > 76543210 > C
+	EXX	;
+	RR H	; C > 76543210 > C
+	RR L	; C > 76543210 > C
 
 ;; STRT-MLT
 strt_mlt:
-        EXX                     ; switch in alternate set.
-        RR      B               ; C > 76543210 > C
-        RR      C               ; C > 76543210 > C
-        EXX                     ; now main set
-        RR      C               ; C > 76543210 > C
-        RRA                     ; C > 76543210 > C
-        DJNZ    mlt_loop        ; loop back 33 times to MLT-LOOP
+	EXX	; switch in alternate set.
+	RR B	; C > 76543210 > C
+	RR C	; C > 76543210 > C
+	EXX	; now main set
+	RR C	; C > 76543210 > C
+	RRA	; C > 76543210 > C
+	DJNZ mlt_loop	; loop back 33 times to MLT-LOOP
 
 ;
 
-        EX      DE,HL           ;
-        EXX                     ;
-        EX      DE,HL           ;
-        EXX                     ;
-        POP     BC              ;
-        POP     HL              ;
-        LD      A,B             ;
-        ADD     A,C             ;
-        JR      NZ,make_expt    ; forward to MAKE-EXPT
+	EX DE,HL	;
+	EXX	;
+	EX DE,HL	;
+	EXX	;
+	POP BC	;
+	POP HL	;
+	LD A,B	;
+	ADD A,C	;
+	JR NZ,make_expt	; forward to MAKE-EXPT
 
-        AND     A               ;
+	AND A	;
 
 ;; MAKE-EXPT
 make_expt:
-        DEC     A               ;
-        CCF                     ; Complement Carry Flag
+	DEC A	;
+	CCF	; Complement Carry Flag
 
 ;; DIVN-EXPT
 divn_expt:
-        RLA                     ;
-        CCF                     ; Complement Carry Flag
-        RRA                     ;
-        JP      P,oflw1_clr     ; forward to OFLW1-CLR
+	RLA	;
+	CCF	; Complement Carry Flag
+	RRA	;
+	JP P,oflw1_clr	; forward to OFLW1-CLR
 
-        JR      NC,err_number_too_big ; forward to REPORT-6
+	JR NC,err_number_too_big	; forward to REPORT-6
 
-        AND     A               ;
+	AND A	;
 
 ;; OFLW1-CLR
 oflw1_clr:
-        INC     A               ;
-        JR      NZ,oflw2_clr    ; forward to OFLW2-CLR
+	INC A	;
+	JR NZ,oflw2_clr	; forward to OFLW2-CLR
 
-        JR      C,oflw2_clr     ; forward to OFLW2-CLR
+	JR C,oflw2_clr	; forward to OFLW2-CLR
 
-        EXX                     ;
-        BIT     7,D             ;
-        EXX                     ;
-        JR      NZ,err_number_too_big ; forward to REPORT-6
+	EXX	;
+	BIT 7,D	;
+	EXX	;
+	JR NZ,err_number_too_big	; forward to REPORT-6
 
 ;; OFLW2-CLR
 oflw2_clr:
-        LD      (HL),A          ;
-        EXX                     ;
-        LD      A,B             ;
-        EXX                     ;
+	LD (HL),A	;
+	EXX	;
+	LD A,B	;
+	EXX	;
 
 ; addition joins here with carry flag clear.
 
 ;; TEST-NORM
 test_norm:
-        JR      NC,normalize    ; forward to NORMALIZE
+	JR NC,normalize	; forward to NORMALIZE
 
-        LD      A,(HL)          ;
-        AND     A               ;
+	LD A,(HL)	;
+	AND A	;
 
 ;; NEAR-ZERO
 near_zero:
-        LD      A,$80           ; prepare to rescue the most significant bit 
-                                ; of the mantissa if it is set.
-        JR      Z,skip_zero     ; skip forward to SKIP-ZERO
+	LD A,$80	; prepare to rescue the most significant bit
+		; of the mantissa if it is set.
+	JR Z,skip_zero	; skip forward to SKIP-ZERO
 
 ;; ZERO-RSLT
 zero_rslt:
-        XOR     A               ; make mask byte zero signaling set five
-                                ; bytes to zero.
+	XOR A	; make mask byte zero signaling set five
+		; bytes to zero.
 
 ;; SKIP-ZERO
 skip_zero:
-        EXX                     ; switch in alternate set
-        AND     D               ; isolate most significant bit (if A is $80).
+	EXX	; switch in alternate set
+	AND D	; isolate most significant bit (if A is $80).
 
-        CALL    zeros_4_5       ; routine ZEROS-4/5 sets mantissa without 
-                                ; affecting any flags.
+	CALL zeros_4_5	; routine ZEROS-4/5 sets mantissa without
+		; affecting any flags.
 
-        RLCA                    ; test if MSB set. bit 7 goes to bit 0.
-                                ; either $00 -> $00 or $80 -> $01
-        LD      (HL),A          ; make exponent $01 (lowest) or $00 zero
-        JR      C,oflow_clr     ; forward if first case to OFLOW-CLR
+	RLCA	; test if MSB set. bit 7 goes to bit 0.
+		; either $00 -> $00 or $80 -> $01
+	LD (HL),A	; make exponent $01 (lowest) or $00 zero
+	JR C,oflow_clr	; forward if first case to OFLOW-CLR
 
-        INC     HL              ; address first mantissa byte on the
-                                ; calculator stack.
-        LD      (HL),A          ; insert a zero for the sign bit.
-        DEC     HL              ; point to zero exponent
-        JR      oflow_clr       ; forward to OFLOW-CLR
+	INC HL	; address first mantissa byte on the
+		; calculator stack.
+	LD (HL),A	; insert a zero for the sign bit.
+	DEC HL	; point to zero exponent
+	JR oflow_clr	; forward to OFLOW-CLR
 
 ; ---
 
@@ -989,111 +989,111 @@ skip_zero:
 
 ;; NORMALIZE
 normalize:
-        LD      B,$20           ; a maximum of thirty-two left shifts will be 
-                                ; needed.
+	LD B,$20	; a maximum of thirty-two left shifts will be
+		; needed.
 
 ;; SHIFT-ONE
 shift_one:
-        EXX                     ; address higher 16 bits.
-        BIT     7,D             ; test the leftmost bit
-        EXX                     ; address lower 16 bits.
+	EXX	; address higher 16 bits.
+	BIT 7,D	; test the leftmost bit
+	EXX	; address lower 16 bits.
 
-        JR      NZ,norml_now    ; forward if leftmost bit was set to NORML-NOW
+	JR NZ,norml_now	; forward if leftmost bit was set to NORML-NOW
 
-        RLCA                    ; this holds zero from addition, 33rd bit 
-                                ; from multiplication.
+	RLCA	; this holds zero from addition, 33rd bit
+		; from multiplication.
 
-        RL      E               ; C < 76543210 < C
-        RL      D               ; C < 76543210 < C
+	RL E	; C < 76543210 < C
+	RL D	; C < 76543210 < C
 
-        EXX                     ; address higher 16 bits.
+	EXX	; address higher 16 bits.
 
-        RL      E               ; C < 76543210 < C
-        RL      D               ; C < 76543210 < C
+	RL E	; C < 76543210 < C
+	RL D	; C < 76543210 < C
 
-        EXX                     ; switch to main set.
+	EXX	; switch to main set.
 
-        DEC     (HL)            ; decrement the exponent byte on the calculator
-                                ; stack.
+	DEC (HL)	; decrement the exponent byte on the calculator
+		; stack.
 
-        JR      Z,near_zero     ; back if exponent becomes zero to NEAR-ZERO
-                                ; it's just possible that the last rotation
-                                ; set bit 7 of D. We shall see.
+	JR Z,near_zero	; back if exponent becomes zero to NEAR-ZERO
+		; it's just possible that the last rotation
+		; set bit 7 of D. We shall see.
 
-        DJNZ    shift_one       ; loop back to SHIFT-ONE
+	DJNZ shift_one	; loop back to SHIFT-ONE
 
 ; if thirty-two left shifts were performed without setting the most significant 
 ; bit then the result is zero.
 
-        JR      zero_rslt       ; back to ZERO-RSLT
+	JR zero_rslt	; back to ZERO-RSLT
 
 ; ---
 
 ;; NORML-NOW
 norml_now:
-        RLA                     ; for the addition path, A is always zero.
-                                ; for the mult path, ...
+	RLA	; for the addition path, A is always zero.
+		; for the mult path, ...
 
-        JR      NC,oflow_clr    ; forward to OFLOW-CLR
+	JR NC,oflow_clr	; forward to OFLOW-CLR
 
 ; this branch is taken only with multiplication.
 
-        CALL    add_back        ; routine ADD-BACK
+	CALL add_back	; routine ADD-BACK
 
-        JR      NZ,oflow_clr    ; forward to OFLOW-CLR
+	JR NZ,oflow_clr	; forward to OFLOW-CLR
 
-        EXX                     ;
-        LD      D,$80           ;
-        EXX                     ;
-        INC     (HL)            ;
-        JR      Z,err_number_too_big ; forward to REPORT-6
+	EXX	;
+	LD D,$80	;
+	EXX	;
+	INC (HL)	;
+	JR Z,err_number_too_big	; forward to REPORT-6
 
 ; now transfer the mantissa from the register sets to the calculator stack
 ; incorporating the sign bit already there.
 
 ;; OFLOW-CLR
 oflow_clr:
-        PUSH    HL              ; save pointer to exponent on stack.
-        INC     HL              ; address first byte of mantissa which was 
-                                ; previously loaded with sign bit $00 or $80.
+	PUSH HL	; save pointer to exponent on stack.
+	INC HL	; address first byte of mantissa which was
+		; previously loaded with sign bit $00 or $80.
 
-        EXX                     ; - - -
-        PUSH    DE              ; push the most significant two bytes.
-        EXX                     ; - - -
+	EXX	; - - -
+	PUSH DE	; push the most significant two bytes.
+	EXX	; - - -
 
-        POP     BC              ; pop - true mantissa is now BCDE.
+	POP BC	; pop - true mantissa is now BCDE.
 
 ; now pick up the sign bit.
 
-        LD      A,B             ; first mantissa byte to A 
-        RLA                     ; rotate out bit 7 which is set
-        RL      (HL)            ; rotate sign bit on stack into carry.
-        RRA                     ; rotate sign bit into bit 7 of mantissa.
+	LD A,B	; first mantissa byte to A
+	RLA	; rotate out bit 7 which is set
+	RL (HL)	; rotate sign bit on stack into carry.
+	RRA	; rotate sign bit into bit 7 of mantissa.
 
 ; and transfer mantissa from main registers to calculator stack.
 
-        LD      (HL),A          ;
-        INC     HL              ;
-        LD      (HL),C          ;
-        INC     HL              ;
-        LD      (HL),D          ;
-        INC     HL              ;
-        LD      (HL),E          ;
+	LD (HL),A	;
+	INC HL	;
+	LD (HL),C	;
+	INC HL	;
+	LD (HL),D	;
+	INC HL	;
+	LD (HL),E	;
 
-        POP     HL              ; restore pointer to num1 now result.
-        POP     DE              ; restore pointer to num2 now STKEND.
+	POP HL	; restore pointer to num1 now result.
+	POP DE	; restore pointer to num2 now STKEND.
 
-        EXX                     ; - - -
-        POP     HL              ; restore pointer to next calculator literal.
-        EXX                     ; - - -
+	EXX	; - - -
+	POP HL	; restore pointer to next calculator literal.
+	EXX	; - - -
 
-        RET                     ; return.
+	RET	; return.
 
 ; ---
 
 err_number_too_big
-			rst error
-			db err_code_number_too_big
+	rst error
+	db err_code_number_too_big
 
 ; ------------------------
 ; THE 'DIVISION' OPERATION
@@ -1111,95 +1111,95 @@ err_number_too_big
 
 ;; division
 division:
-        CALL    conv_two_to_fp  ; ensure both values are floating-point.
-        EX      DE,HL           ; consider the second number first. 
-        XOR     A               ; set the running sign flag.
-        CALL    prep_m_d        ; routine PREP-M/D
-        JR      C,err_number_too_big ; back if zero to REPORT-6
-                                ; 'Arithmetic overflow'
+	CALL conv_two_to_fp	; ensure both values are floating-point.
+	EX DE,HL	; consider the second number first.
+	XOR A	; set the running sign flag.
+	CALL prep_m_d	; routine PREP-M/D
+	JR C,err_number_too_big	; back if zero to REPORT-6
+		; 'Arithmetic overflow'
 
-        EX      DE,HL           ; now prepare first number and check for zero.
-        CALL    prep_m_d        ; routine PREP-M/D
-        RET     C               ; return if zero, 0/anything is zero.
+	EX DE,HL	; now prepare first number and check for zero.
+	CALL prep_m_d	; routine PREP-M/D
+	RET C	; return if zero, 0/anything is zero.
 
-        EXX                     ; - - -
-        PUSH    HL              ; save pointer to the next calculator literal.
-        EXX                     ; - - -
+	EXX	; - - -
+	PUSH HL	; save pointer to the next calculator literal.
+	EXX	; - - -
 
-        PUSH    DE              ; save pointer to divisor - will be STKEND.
-        PUSH    HL              ; save pointer to dividend - will be result.
+	PUSH DE	; save pointer to divisor - will be STKEND.
+	PUSH HL	; save pointer to dividend - will be result.
 
-        CALL    fetch_two       ; routine FETCH-TWO fetches the two numbers
-                                ; into the registers H'B'C'C B
-                                ;                    L'D'E'D E
-        EXX                     ; - - -
-        PUSH    HL              ; save the two exponents.
+	CALL fetch_two	; routine FETCH-TWO fetches the two numbers
+		; into the registers H'B'C'C B
+		;                    L'D'E'D E
+	EXX	; - - -
+	PUSH HL	; save the two exponents.
 
-        LD      H,B             ; transfer the dividend to H'L'H L
-        LD      L,C             ; 
-        EXX                     ;
-        LD      H,C             ;
-        LD      L,B             ; 
+	LD H,B	; transfer the dividend to H'L'H L
+	LD L,C	;
+	EXX	;
+	LD H,C	;
+	LD L,B	;
 
-        XOR     A               ; clear carry bit and accumulator.
-        LD      B,$DF           ; count upwards from -33 decimal
-        JR      div_start       ; forward to mid-loop entry point DIV-START
+	XOR A	; clear carry bit and accumulator.
+	LD B,$DF	; count upwards from -33 decimal
+	JR div_start	; forward to mid-loop entry point DIV-START
 
 ; ---
 
 ;; DIV-LOOP
 div_loop:
-        RLA                     ; multiply partial quotient by two
-        RL      C               ; setting result bit from carry.
-        EXX                     ;
-        RL      C               ;
-        RL      B               ;
-        EXX                     ;
+	RLA	; multiply partial quotient by two
+	RL C	; setting result bit from carry.
+	EXX	;
+	RL C	;
+	RL B	;
+	EXX	;
 
 ;; div-34th
 div_34th:
-        ADD     HL,HL           ;
-        EXX                     ;
-        ADC     HL,HL           ;
-        EXX                     ;
-        JR      C,subn_only     ; forward to SUBN-ONLY
+	ADD HL,HL	;
+	EXX	;
+	ADC HL,HL	;
+	EXX	;
+	JR C,subn_only	; forward to SUBN-ONLY
 
 ;; DIV-START
 div_start:
-        SBC     HL,DE           ; subtract divisor part.
-        EXX                     ;
-        SBC     HL,DE           ;
-        EXX                     ;
-        JR      NC,no_rstore    ; forward if subtraction goes to NO-RSTORE
+	SBC HL,DE	; subtract divisor part.
+	EXX	;
+	SBC HL,DE	;
+	EXX	;
+	JR NC,no_rstore	; forward if subtraction goes to NO-RSTORE
 
-        ADD     HL,DE           ; else restore     
-        EXX                     ;
-        ADC     HL,DE           ;
-        EXX                     ;
-        AND     A               ; clear carry
-        JR      count_one       ; forward to COUNT-ONE
+	ADD HL,DE	; else restore
+	EXX	;
+	ADC HL,DE	;
+	EXX	;
+	AND A	; clear carry
+	JR count_one	; forward to COUNT-ONE
 
 ; ---
 
 ;; SUBN-ONLY
 subn_only:
-        AND     A               ;
-        SBC     HL,DE           ;
-        EXX                     ;
-        SBC     HL,DE           ;
-        EXX                     ;
+	AND A	;
+	SBC HL,DE	;
+	EXX	;
+	SBC HL,DE	;
+	EXX	;
 
 ;; NO-RSTORE
 no_rstore:
-        SCF                     ; set carry flag
+	SCF	; set carry flag
 
 ;; COUNT-ONE
 count_one:
-        INC     B               ; increment the counter
-        JP      M,div_loop      ; back while still minus to DIV-LOOP
+	INC B	; increment the counter
+	JP M,div_loop	; back while still minus to DIV-LOOP
 
-        PUSH    AF              ;
-        JR      Z,div_start     ; back to DIV-START
+	PUSH AF	;
+	JR Z,div_start	; back to DIV-START
 
 ; "This jump is made to the wrong place. No 34th bit will ever be obtained
 ; without first shifting the dividend. Hence important results like 1/10 and
@@ -1212,23 +1212,23 @@ count_one:
 ; However if you make this change, then while (1/2=.5) will now evaluate as
 ; true, (.25=1/4), which did evaluate as true, no longer does.
 
-        LD      E,A             ;
-        LD      D,C             ;
-        EXX                     ;
-        LD      E,C             ;
-        LD      D,B             ;
+	LD E,A	;
+	LD D,C	;
+	EXX	;
+	LD E,C	;
+	LD D,B	;
 
-        POP     AF              ;
-        RR      B               ;
-        POP     AF              ;
-        RR      B               ;
+	POP AF	;
+	RR B	;
+	POP AF	;
+	RR B	;
 
-        EXX                     ;
-        POP     BC              ;
-        POP     HL              ;
-        LD      A,B             ;
-        SUB     C               ;
-        JP      divn_expt       ; jump back to DIVN-EXPT
+	EXX	;
+	POP BC	;
+	POP HL	;
+	LD A,B	;
+	SUB C	;
+	JP divn_expt	; jump back to DIVN-EXPT
 
 ; ------------------------------------------------
 ; THE 'INTEGER TRUNCATION TOWARDS ZERO' SUBROUTINE
@@ -1239,31 +1239,31 @@ count_one:
 
 ;; truncate
 truncate:
-        LD      A,(HL)          ; fetch exponent
-        OR      A               ; if it's 0, this is in integer form
-        RET     Z               ; and therefore there's nothing to do.
+	LD A,(HL)	; fetch exponent
+	OR A	; if it's 0, this is in integer form
+	RET Z	; and therefore there's nothing to do.
 
-        CP      $81             ; compare to +1  
-        JR      NC,t_gr_zero    ; forward, if 1 or more, to T-GR-ZERO
+	CP $81	; compare to +1
+	JR NC,t_gr_zero	; forward, if 1 or more, to T-GR-ZERO
 
 ; else the number is smaller than plus or minus 1 and can be made zero.
 
-        LD      (HL),$00        ; make exponent zero.
-        LD      A,$20           ; prepare to set 32 bits of mantissa to zero.
-        JR      nil_bytes       ; forward to NIL-BYTES
+	LD (HL),$00	; make exponent zero.
+	LD A,$20	; prepare to set 32 bits of mantissa to zero.
+	JR nil_bytes	; forward to NIL-BYTES
 
 ; ---
 
 ;; T-GR-ZERO
 t_gr_zero:
-        SUB     $A0             ; subtract +32 from exponent
-        RET     P               ; return if result is positive as all 32 bits 
-                                ; of the mantissa relate to the integer part.
-                                ; The floating point is somewhere to the right 
-                                ; of the mantissa
+	SUB $A0	; subtract +32 from exponent
+	RET P	; return if result is positive as all 32 bits
+		; of the mantissa relate to the integer part.
+		; The floating point is somewhere to the right
+		; of the mantissa
 
-        NEG                     ; else negate to form number of rightmost bits 
-                                ; to be blanked.
+	NEG	; else negate to form number of rightmost bits
+		; to be blanked.
 
 ; for instance, disregarding the sign bit, the number 3.5 is held as 
 ; exponent $82 mantissa .11100000 00000000 00000000 00000000
@@ -1274,46 +1274,46 @@ t_gr_zero:
 
 ;; NIL-BYTES
 nil_bytes:
-        PUSH    DE              ; save pointer to STKEND
-        EX      DE,HL           ; HL points at STKEND
-        DEC     HL              ; now at last byte of mantissa.
-        LD      B,A             ; Transfer bit count to B register.
-        SRL     B               ; divide by 
-        SRL     B               ; eight
-        SRL     B               ;
-        JR      Z,bits_zero     ; forward if zero to BITS-ZERO
+	PUSH DE	; save pointer to STKEND
+	EX DE,HL	; HL points at STKEND
+	DEC HL	; now at last byte of mantissa.
+	LD B,A	; Transfer bit count to B register.
+	SRL B	; divide by
+	SRL B	; eight
+	SRL B	;
+	JR Z,bits_zero	; forward if zero to BITS-ZERO
 
 ; else the original count was eight or more and whole bytes can be blanked.
 
 ;; BYTE-ZERO
 byte_zero:
-        LD      (HL),$00        ; set eight bits to zero.
-        DEC     HL              ; point to more significant byte of mantissa.
-        DJNZ    byte_zero       ; loop back to BYTE-ZERO
+	LD (HL),$00	; set eight bits to zero.
+	DEC HL	; point to more significant byte of mantissa.
+	DJNZ byte_zero	; loop back to BYTE-ZERO
 
 ; now consider any residual bits.
 
 ;; BITS-ZERO
 bits_zero:
-        AND     $07             ; isolate the remaining bits
-        JR      Z,ix_end        ; forward if none to IX-END
+	AND $07	; isolate the remaining bits
+	JR Z,ix_end	; forward if none to IX-END
 
-        LD      B,A             ; transfer bit count to B counter.
-        LD      A,$FF           ; form a mask 11111111
+	LD B,A	; transfer bit count to B counter.
+	LD A,$FF	; form a mask 11111111
 
 ;; LESS-MASK
 less_mask:
-        SLA     A               ; 1 <- 76543210 <- o     slide mask leftwards.
-        DJNZ    less_mask       ; loop back for bit count to LESS-MASK
+	SLA A	; 1 <- 76543210 <- o     slide mask leftwards.
+	DJNZ less_mask	; loop back for bit count to LESS-MASK
 
-        AND     (HL)            ; lose the unwanted rightmost bits
-        LD      (HL),A          ; and place in mantissa byte.
+	AND (HL)	; lose the unwanted rightmost bits
+	LD (HL),A	; and place in mantissa byte.
 
 ;; IX-END
 ix_end:
-        EX      DE,HL           ; restore result pointer from DE. 
-        POP     DE              ; restore STKEND from stack.
-        RET                     ; return.
+	EX DE,HL	; restore result pointer from DE.
+	POP DE	; restore STKEND from stack.
+	RET	; return.
 
 ; ------------------------
 ; THE 'TABLE OF CONSTANTS'
@@ -1323,31 +1323,31 @@ ix_end:
 
 ;; stk-zero                                                 00 00 00 00 00
 stk_zero:
-        DEFB    $00             ;;Bytes: 1
-        DEFB    $B0             ;;Exponent $00
-        DEFB    $00             ;;(+00,+00,+00)
+	DEFB $00	;;Bytes: 1
+	DEFB $B0	;;Exponent $00
+	DEFB $00	;;(+00,+00,+00)
 
 ;; stk-one                                                  81 00 00 00 00
 stk_one:
-        DEFB    $31             ;;Exponent $81, Bytes: 1
-        DEFB    $00             ;;(+00,+00,+00)
+	DEFB $31	;;Exponent $81, Bytes: 1
+	DEFB $00	;;(+00,+00,+00)
 
 
 ;; stk-half                                                 80 00 00 00 00
 stk_half:
-        DEFB    $30             ;;Exponent: $80, Bytes: 1
-        DEFB    $00             ;;(+00,+00,+00)
+	DEFB $30	;;Exponent: $80, Bytes: 1
+	DEFB $00	;;(+00,+00,+00)
 
 
 ;; stk-pi/2                                                 81 49 0F DA A2
 stk_pi_div_2:
-        DEFB    $F1             ;;Exponent: $81, Bytes: 4
-        DEFB    $49,$0F,$DA,$A2 ;;
+	DEFB $F1	;;Exponent: $81, Bytes: 4
+	DEFB $49,$0F,$DA,$A2	;;
 
 ;; stk-ten                                                  84 20 00 00 00
 stk_ten:
-        DEFB    $34             ;;Exponent: $84, Bytes: 1
-        DEFB    $20             ;;(+00,+00,+00)
+	DEFB $34	;;Exponent: $84, Bytes: 1
+	DEFB $20	;;(+00,+00,+00)
 
 
 ; ------------------------
@@ -1364,165 +1364,165 @@ stk_ten:
 tbl_addrs:
 
 cc_jump_true	equ 0x00
-				dw jump_true
-cc_exchange		equ 0x01
-				dw exchange
-cc_delete		equ 0x02
-				dw delete
+	dw jump_true
+cc_exchange	equ 0x01
+	dw exchange
+cc_delete	equ 0x02
+	dw delete
 
 ; true binary operations.
 
-cc_subtract		equ 0x03
-				dw subtract
-cc_multiply		equ 0x04
-				dw multiply
-cc_division		equ 0x05
-				dw division
-cc_to_power		equ 0x06
-				dw to_power
-cc_fn_or		equ 0x07
-				dw fn_or
+cc_subtract	equ 0x03
+	dw subtract
+cc_multiply	equ 0x04
+	dw multiply
+cc_division	equ 0x05
+	dw division
+cc_to_power	equ 0x06
+	dw to_power
+cc_fn_or	equ 0x07
+	dw fn_or
 cc_no_and_no	equ 0x08
-				dw no_and_no
-cc_no_l_eql		equ 0x09
-				dw comparison
+	dw no_and_no
+cc_no_l_eql	equ 0x09
+	dw comparison
 cc_no_gr_eql	equ 0x0a
-				dw comparison
-cc_nos_neql		equ 0x0b
-				dw comparison
-cc_no_grtr		equ 0x0c
-				dw comparison
-cc_no_less		equ 0x0d
-				dw comparison
-cc_nos_eql		equ 0x0e
-				dw comparison
-cc_addition		equ 0x0f
-				dw addition
+	dw comparison
+cc_nos_neql	equ 0x0b
+	dw comparison
+cc_no_grtr	equ 0x0c
+	dw comparison
+cc_no_less	equ 0x0d
+	dw comparison
+cc_nos_eql	equ 0x0e
+	dw comparison
+cc_addition	equ 0x0f
+	dw addition
 cc_str_and_no	equ 0x10
-				dw error_calc_op
+	dw error_calc_op
 cc_str_l_eql	equ 0x11
-				dw comparison
+	dw comparison
 cc_str_gr_eql	equ 0x12
-				dw comparison
+	dw comparison
 cc_strs_neql	equ 0x13
-				dw comparison
-cc_str_grtr		equ 0x14
-				dw comparison
-cc_str_less		equ 0x15
-				dw comparison
-cc_strs_eql		equ 0x16
-				dw comparison
-cc_strs_add		equ 0x17
-				dw error_calc_op
+	dw comparison
+cc_str_grtr	equ 0x14
+	dw comparison
+cc_str_less	equ 0x15
+	dw comparison
+cc_strs_eql	equ 0x16
+	dw comparison
+cc_strs_add	equ 0x17
+	dw error_calc_op
 
 ; unary follow
 
-cc_val_str		equ 0x18
-				dw error_calc_op
-cc_usr_str		equ 0x19
-				dw error_calc_op
-cc_read_in		equ 0x1a
-				dw error_calc_op
-cc_negate		equ 0x1b
-				dw negate
-cc_code			equ 0x1c
-				dw error_calc_op
-cc_val			equ 0x1d
-				dw error_calc_op
-cc_len			equ 0x1e
-				dw error_calc_op
-cc_sin			equ 0x1f
-				dw sin
-cc_cos			equ 0x20
-				dw cos
-cc_tan			equ 0x21
-				dw tan
-cc_asn			equ 0x22
-				dw asn
-cc_acs			equ 0x23
-				dw acs
-cc_atn			equ 0x24
-				dw atn
-cc_ln			equ 0x25
-				dw ln
-cc_exp			equ 0x26
-				dw exp
-cc_int			equ 0x27
-				dw int
-cc_sqr			equ 0x28
-				dw sqr
-cc_sgn			equ 0x29
-				dw sgn
-cc_abs			equ 0x2a
-				dw abs
-cc_peek			equ 0x2b
-				dw peek
-cc_fn_in		equ 0x2c
-				dw fn_in
-cc_usr_no		equ 0x2d
-				dw usr_no
-cc_str_str		equ 0x2e
-				dw error_calc_op
-cc_chr_str		equ 0x2f
-				dw error_calc_op
-cc_fn_not		equ 0x30
-				dw fn_not
+cc_val_str	equ 0x18
+	dw error_calc_op
+cc_usr_str	equ 0x19
+	dw error_calc_op
+cc_read_in	equ 0x1a
+	dw error_calc_op
+cc_negate	equ 0x1b
+	dw negate
+cc_code	equ 0x1c
+	dw error_calc_op
+cc_val	equ 0x1d
+	dw error_calc_op
+cc_len	equ 0x1e
+	dw error_calc_op
+cc_sin	equ 0x1f
+	dw sin
+cc_cos	equ 0x20
+	dw cos
+cc_tan	equ 0x21
+	dw tan
+cc_asn	equ 0x22
+	dw asn
+cc_acs	equ 0x23
+	dw acs
+cc_atn	equ 0x24
+	dw atn
+cc_ln	equ 0x25
+	dw ln
+cc_exp	equ 0x26
+	dw exp
+cc_int	equ 0x27
+	dw int
+cc_sqr	equ 0x28
+	dw sqr
+cc_sgn	equ 0x29
+	dw sgn
+cc_abs	equ 0x2a
+	dw abs
+cc_peek	equ 0x2b
+	dw peek
+cc_fn_in	equ 0x2c
+	dw fn_in
+cc_usr_no	equ 0x2d
+	dw usr_no
+cc_str_str	equ 0x2e
+	dw error_calc_op
+cc_chr_str	equ 0x2f
+	dw error_calc_op
+cc_fn_not	equ 0x30
+	dw fn_not
 
 ; end of true unary
 
 cc_duplicate	equ 0x31
-				dw duplicate
-cc_n_mod_m		equ 0x32
-				dw n_mod_m
-cc_jump			equ 0x33
-				dw jump
-cc_stk_data		equ 0x34
-				dw stk_data
+	dw duplicate
+cc_n_mod_m	equ 0x32
+	dw n_mod_m
+cc_jump	equ 0x33
+	dw jump
+cc_stk_data	equ 0x34
+	dw stk_data
 cc_dec_jr_nz	equ 0x35
-				dw dec_jr_nz
-cc_less_0		equ 0x36
-				dw less_0
+	dw dec_jr_nz
+cc_less_0	equ 0x36
+	dw less_0
 cc_greater_0	equ 0x37
-				dw greater_0
-cc_end_calc		equ 0x38
-				dw end_calc
-cc_get_argt		equ 0x39
-				dw get_argt
-cc_truncate		equ 0x3a
-				dw truncate
-cc_calc_2		equ 0x3b
-				dw calc_2
-cc_e_to_fp		equ 0x3c
-				dw error_calc_op
-cc_re_stack		equ 0x3d
-				dw error_calc_op
+	dw greater_0
+cc_end_calc	equ 0x38
+	dw end_calc
+cc_get_argt	equ 0x39
+	dw get_argt
+cc_truncate	equ 0x3a
+	dw truncate
+cc_calc_2	equ 0x3b
+	dw calc_2
+cc_e_to_fp	equ 0x3c
+	dw error_calc_op
+cc_re_stack	equ 0x3d
+	dw error_calc_op
 
 ; the following are just the next available slots for the 128 compound literals
 ; which are in range $80 - $FF.
 
-compound_literal_offset   equ $ - tbl_addrs
+compound_literal_offset	equ $ - tbl_addrs
 
-				dw series_xx		; codes 0x80-0x9f
-				dw stk_const_xx		; codes 0xa0-0xbf
-				dw st_mem_xx		; codes 0xc0-0xdf
-				dw get_mem_xx		; codes 0xe0-0xff
+	dw series_xx	; codes 0x80-0x9f
+	dw stk_const_xx	; codes 0xa0-0xbf
+	dw st_mem_xx	; codes 0xc0-0xdf
+	dw get_mem_xx	; codes 0xe0-0xff
 
 cc_series_06	equ 0x86
 cc_series_08	equ 0x88
 cc_series_0c	equ 0x8c
 
-cc_stk_zero		equ 0xa0
-cc_stk_one		equ 0xa1
-cc_stk_half		equ 0xa2
+cc_stk_zero	equ 0xa0
+cc_stk_one	equ 0xa1
+cc_stk_half	equ 0xa2
 cc_stk_pi_div_2	equ 0xa3
-cc_stk_ten		equ 0xa4
+cc_stk_ten	equ 0xa4
 
-cc_st_mem_0		equ 0xc0
-cc_st_mem_1		equ 0xc1
-cc_st_mem_2		equ 0xc2
-cc_st_mem_3		equ 0xc3
-cc_st_mem_4		equ 0xc4
-cc_st_mem_5		equ 0xc5
+cc_st_mem_0	equ 0xc0
+cc_st_mem_1	equ 0xc1
+cc_st_mem_2	equ 0xc2
+cc_st_mem_3	equ 0xc3
+cc_st_mem_4	equ 0xc4
+cc_st_mem_5	equ 0xc5
 
 cc_get_mem_0	equ 0xe0
 cc_get_mem_1	equ 0xe1
@@ -1540,51 +1540,51 @@ cc_get_mem_5	equ 0xe5
 
 ;; CALCULATE
 calculate:
-        CALL    stk_pntrs       ; routine STK-PNTRS is called to set up the
-                                ; calculator stack pointers for a default
-                                ; unary operation. HL = last value on stack.
-                                ; DE = STKEND first location after stack.
+	CALL stk_pntrs	; routine STK-PNTRS is called to set up the
+		; calculator stack pointers for a default
+		; unary operation. HL = last value on stack.
+		; DE = STKEND first location after stack.
 
 ; the calculate routine is called at this point by the series generator...
 
 ;; GEN-ENT-1
 gen_ent_1:
-        LD      A,B             ; fetch the Z80 B register to A
-        LD      (breg),A        ; and store value in system variable BREG.
-                                ; this will be the counter for dec-jr-nz
-                                ; or if used from fp-calc2 the calculator
-                                ; instruction.
+	LD A,B	; fetch the Z80 B register to A
+	LD (breg),A	; and store value in system variable BREG.
+		; this will be the counter for dec-jr-nz
+		; or if used from fp-calc2 the calculator
+		; instruction.
 
 ; ... and again later at this point
 
 ;; GEN-ENT-2
 gen_ent_2:
-        EXX                     ; switch sets
-        EX      (SP),HL         ; and store the address of next instruction,
-                                ; the return address, in H'L'.
-                                ; If this is a recursive call then the H'L'
-                                ; of the previous invocation goes on stack.
-                                ; c.f. end-calc.
-        EXX                     ; switch back to main set.
+	EXX	; switch sets
+	EX (SP),HL	; and store the address of next instruction,
+		; the return address, in H'L'.
+		; If this is a recursive call then the H'L'
+		; of the previous invocation goes on stack.
+		; c.f. end-calc.
+	EXX	; switch back to main set.
 
 ; this is the re-entry looping point when handling a string of literals.
 
 ;; RE-ENTRY
 re_entry:
-        LD      (stkend),DE     ; save end of stack in system variable STKEND
-        EXX                     ; switch to alt
-        LD      A,(HL)          ; get next literal
-        INC     HL              ; increase pointer'
+	LD (stkend),DE	; save end of stack in system variable STKEND
+	EXX	; switch to alt
+	LD A,(HL)	; get next literal
+	INC HL	; increase pointer'
 
 ; single operation jumps back to here
 
 ;; SCAN-ENT
 scan_ent:
-        PUSH    HL              ; save pointer on stack   *
-        AND     A               ; now test the literal
-        JP      P,first_3d      ; forward to FIRST-3D if in range $00 - $3D
-                                ; anything with bit 7 set will be one of
-                                ; 128 compound literals.
+	PUSH HL	; save pointer on stack   *
+	AND A	; now test the literal
+	JP P,first_3d	; forward to FIRST-3D if in range $00 - $3D
+		; anything with bit 7 set will be one of
+		; 128 compound literals.
 
 ; compound literals have the following format.
 ; bit 7 set indicates compound.
@@ -1593,19 +1593,19 @@ scan_ent:
 ; The subgroup 0-3 needs to be manipulated to form the next available four
 ; address places after the simple literals in the address table.
 
-        LD      D,A             ; save literal in D
-        AND     $60             ; and with 01100000 to isolate subgroup
-        RRCA                    ; rotate bits
-        RRCA                    ; 4 places to right
-        RRCA                    ; not five as we need offset * 2
-        RRCA                    ; 00000xx0
-        ADD     A,compound_literal_offset
-                                ; add length of non-compound table to give
-                                ; correct offset.
-        LD      L,A             ; store in L for later indexing.
-        LD      A,D             ; bring back compound literal
-        AND     $1F             ; use mask to isolate parameter bits
-        JR      ent_table       ; forward to ENT-TABLE
+	LD D,A	; save literal in D
+	AND $60	; and with 01100000 to isolate subgroup
+	RRCA	; rotate bits
+	RRCA	; 4 places to right
+	RRCA	; not five as we need offset * 2
+	RRCA	; 00000xx0
+	ADD A,compound_literal_offset
+		; add length of non-compound table to give
+		; correct offset.
+	LD L,A	; store in L for later indexing.
+	LD A,D	; bring back compound literal
+	AND $1F	; use mask to isolate parameter bits
+	JR ent_table	; forward to ENT-TABLE
 
 ; ---
 
@@ -1613,45 +1613,45 @@ scan_ent:
 
 ;; FIRST-3D
 first_3d:
-        CP      $18             ; compare with first unary operations.
-        JR      NC,double_a     ; to DOUBLE-A with unary operations
+	CP $18	; compare with first unary operations.
+	JR NC,double_a	; to DOUBLE-A with unary operations
 
 ; it is binary so adjust pointers.
 
-        EXX                     ;
-        LD      BC,$FFFB        ; the value -5
-        LD      D,H             ; transfer HL, the last value, to DE.
-        LD      E,L             ;
-        ADD     HL,BC           ; subtract 5 making HL point to second
-                                ; value.
-        EXX                     ;
+	EXX	;
+	LD BC,$FFFB	; the value -5
+	LD D,H	; transfer HL, the last value, to DE.
+	LD E,L	;
+	ADD HL,BC	; subtract 5 making HL point to second
+		; value.
+	EXX	;
 
 ;; DOUBLE-A
 double_a:
-        RLCA                    ; double the literal
-        LD      L,A             ; and store in L for indexing
+	RLCA	; double the literal
+	LD L,A	; and store in L for indexing
 
 ;; ENT-TABLE
 ent_table:
-        LD      DE,tbl_addrs    ; Address: tbl-addrs
-        LD      H,$00           ; prepare to index
-        ADD     HL,DE           ; add to get address of routine
-        LD      E,(HL)          ; low byte to E
-        INC     HL              ;
-        LD      D,(HL)          ; high byte to D
+	LD DE,tbl_addrs	; Address: tbl-addrs
+	LD H,$00	; prepare to index
+	ADD HL,DE	; add to get address of routine
+	LD E,(HL)	; low byte to E
+	INC HL	;
+	LD D,(HL)	; high byte to D
 
-        LD      HL,re_entry     ; Address: RE-ENTRY
-        EX      (SP),HL         ; goes on machine stack
-                                ; address of next literal goes to HL. *
+	LD HL,re_entry	; Address: RE-ENTRY
+	EX (SP),HL	; goes on machine stack
+		; address of next literal goes to HL. *
 
 
-        PUSH    DE              ; now the address of routine is stacked.
-        EXX                     ; back to main set
-                                ; avoid using IY register.
-        LD      BC,(stkend_hi)  ; STKEND_hi
-                                ; nothing much goes to C but BREG to B
-                                ; and continue into next ret instruction
-                                ; which has a dual identity
+	PUSH DE	; now the address of routine is stacked.
+	EXX	; back to main set
+		; avoid using IY register.
+	LD BC,(stkend_hi)	; STKEND_hi
+		; nothing much goes to C but BREG to B
+		; and continue into next ret instruction
+		; which has a dual identity
 
 ; -----------------------
 ; THE 'DELETE' SUBROUTINE
@@ -1666,7 +1666,7 @@ ent_table:
 
 ;; delete
 delete:
-        RET                     ; return - indirect jump if from above.
+	RET	; return - indirect jump if from above.
 
 ; ---------------------------------
 ; THE 'SINGLE OPERATION' SUBROUTINE
@@ -1677,12 +1677,12 @@ delete:
 
 ;; fp-calc-2
 calc_2:
-        POP     AF              ; drop return address.
-        LD      A,(breg)        ; load accumulator from system variable BREG
-                                ; value will be literal eg. 'tan'
-        EXX                     ; switch to alt
-        JR      scan_ent        ; back to SCAN-ENT
-                                ; next literal will be end-calc in scanning
+	POP AF	; drop return address.
+	LD A,(breg)	; load accumulator from system variable BREG
+		; value will be literal eg. 'tan'
+	EXX	; switch to alt
+	JR scan_ent	; back to SCAN-ENT
+		; next literal will be end-calc in scanning
 
 ; ------------------------------
 ; THE 'TEST 5 SPACES' SUBROUTINE
@@ -1694,14 +1694,14 @@ calc_2:
 
 ;; TEST-5-SP
 test_5_sp:
-        PUSH    DE              ; save
-        PUSH    HL              ; registers
-        LD      BC,$0005        ; an overhead of five bytes
-        CALL    test_room       ; routine TEST-ROOM tests free RAM raising
-                                ; an error if not.
-        POP     HL              ; else restore
-        POP     DE              ; registers.
-        RET                     ; return with BC set at 5.
+	PUSH DE	; save
+	PUSH HL	; registers
+	LD BC,$0005	; an overhead of five bytes
+	CALL test_room	; routine TEST-ROOM tests free RAM raising
+		; an error if not.
+	POP HL	; else restore
+	POP DE	; registers.
+	RET	; return with BC set at 5.
 
 ; ---------------------------------------------
 ; THE 'MOVE A FLOATING POINT NUMBER' SUBROUTINE
@@ -1717,11 +1717,11 @@ test_5_sp:
 ;; MOVE-FP
 duplicate:
 move_fp:
-        CALL    test_5_sp       ; routine TEST-5-SP test free memory
-                                ; and sets BC to 5.
-        LDIR                    ; copy the five bytes.
-        RET                     ; return with DE addressing new STKEND
-                                ; and HL addressing new last value.
+	CALL test_5_sp	; routine TEST-5-SP test free memory
+		; and sets BC to 5.
+	LDIR	; copy the five bytes.
+	RET	; return with DE addressing new STKEND
+		; and HL addressing new last value.
 ; -------------------------------
 ; THE 'STACK LITERALS' SUBROUTINE
 ; -------------------------------
@@ -1733,75 +1733,75 @@ move_fp:
 
 ;; stk-data
 stk_data:
-        LD      H,D             ; transfer STKEND
-        LD      L,E             ; to HL for result.
+	LD H,D	; transfer STKEND
+	LD L,E	; to HL for result.
 
 ;; STK-CONST
 stk_const:
-        CALL    test_5_sp       ; routine TEST-5-SP tests that room exists
-                                ; and sets BC to $05.
+	CALL test_5_sp	; routine TEST-5-SP tests that room exists
+		; and sets BC to $05.
 
-        EXX                     ; switch to alternate set
-        PUSH    HL              ; save the pointer to next literal on stack
-        EXX                     ; switch back to main set
+	EXX	; switch to alternate set
+	PUSH HL	; save the pointer to next literal on stack
+	EXX	; switch back to main set
 
-        EX      (SP),HL         ; pointer to HL, destination to stack.
+	EX (SP),HL	; pointer to HL, destination to stack.
 
-        PUSH    BC              ; save BC - value 5 from test room ??.
+	PUSH BC	; save BC - value 5 from test room ??.
 
-        LD      A,(HL)          ; fetch the byte following 'stk-data'
-        AND     $C0             ; isolate bits 7 and 6
-        RLCA                    ; rotate
-        RLCA                    ; to bits 1 and 0  range $00 - $03.
-        LD      C,A             ; transfer to C
-        INC     C               ; and increment to give number of bytes
-                                ; to read. $01 - $04
-        LD      A,(HL)          ; reload the first byte
-        AND     $3F             ; mask off to give possible exponent.
-        JR      NZ,form_exp     ; forward to FORM-EXP if it was possible to
-                                ; include the exponent.
+	LD A,(HL)	; fetch the byte following 'stk-data'
+	AND $C0	; isolate bits 7 and 6
+	RLCA	; rotate
+	RLCA	; to bits 1 and 0  range $00 - $03.
+	LD C,A	; transfer to C
+	INC C	; and increment to give number of bytes
+		; to read. $01 - $04
+	LD A,(HL)	; reload the first byte
+	AND $3F	; mask off to give possible exponent.
+	JR NZ,form_exp	; forward to FORM-EXP if it was possible to
+		; include the exponent.
 
 ; else byte is just a byte count and exponent comes next.
 
-        INC     HL              ; address next byte and
-        LD      A,(HL)          ; pick up the exponent ( - $50).
+	INC HL	; address next byte and
+	LD A,(HL)	; pick up the exponent ( - $50).
 
 ;; FORM-EXP
 form_exp:
-        ADD     A,$50           ; now add $50 to form actual exponent
-        LD      (DE),A          ; and load into first destination byte.
-        LD      A,$05           ; load accumulator with $05 and
-        SUB     C               ; subtract C to give count of trailing
-                                ; zeros plus one.
-        INC     HL              ; increment source
-        INC     DE              ; increment destination
-        LD      B,$00           ; prepare to copy
-        LDIR                    ; copy C bytes
+	ADD A,$50	; now add $50 to form actual exponent
+	LD (DE),A	; and load into first destination byte.
+	LD A,$05	; load accumulator with $05 and
+	SUB C	; subtract C to give count of trailing
+		; zeros plus one.
+	INC HL	; increment source
+	INC DE	; increment destination
+	LD B,$00	; prepare to copy
+	LDIR	; copy C bytes
 
-        POP     BC              ; restore 5 counter to BC ??.
+	POP BC	; restore 5 counter to BC ??.
 
-        EX      (SP),HL         ; put HL on stack as next literal pointer
-                                ; and the stack value - result pointer -
-                                ; to HL.
+	EX (SP),HL	; put HL on stack as next literal pointer
+		; and the stack value - result pointer -
+		; to HL.
 
-        EXX                     ; switch to alternate set.
-        POP     HL              ; restore next literal pointer from stack
-                                ; to H'L'.
-        EXX                     ; switch back to main set.
+	EXX	; switch to alternate set.
+	POP HL	; restore next literal pointer from stack
+		; to H'L'.
+	EXX	; switch back to main set.
 
-        LD      B,A             ; zero count to B
-        XOR     A               ; clear accumulator
+	LD B,A	; zero count to B
+	XOR A	; clear accumulator
 
 ;; STK-ZEROS
 stk_zeros:
-        DEC     B               ; decrement B counter
-        RET     Z               ; return if zero.          >>
-                                ; DE points to new STKEND
-                                ; HL to new number.
+	DEC B	; decrement B counter
+	RET Z	; return if zero.          >>
+		; DE points to new STKEND
+		; HL to new number.
 
-        LD      (DE),A          ; else load zero to destination
-        INC     DE              ; increase destination
-        JR      stk_zeros       ; loop back to STK-ZEROS until done.
+	LD (DE),A	; else load zero to destination
+	INC DE	; increase destination
+	JR stk_zeros	; loop back to STK-ZEROS until done.
 
 
 ; -------------------------------
@@ -1813,26 +1813,26 @@ stk_zeros:
 
 ;; SKIP-CONS
 skip_cons:
-        AND     A               ; test if initially zero.
+	AND A	; test if initially zero.
 
 ;; SKIP-NEXT
 skip_next:
-        RET     Z               ; return if zero.          >>
+	RET Z	; return if zero.          >>
 
-        PUSH    AF              ; save count.
-        PUSH    DE              ; and normal STKEND
+	PUSH AF	; save count.
+	PUSH DE	; and normal STKEND
 
-        LD      DE,$0000        ; dummy value for STKEND at start of ROM
-                                ; Note. not a fault but this has to be
-                                ; moved elsewhere when running in RAM.
-                                ;
-        CALL    stk_const       ; routine STK-CONST works through variable
-                                ; length records.
+	LD DE,$0000	; dummy value for STKEND at start of ROM
+		; Note. not a fault but this has to be
+		; moved elsewhere when running in RAM.
+		;
+	CALL stk_const	; routine STK-CONST works through variable
+		; length records.
 
-        POP     DE              ; restore real STKEND
-        POP     AF              ; restore count
-        DEC     A               ; decrease
-        JR      skip_next       ; loop back to SKIP-NEXT
+	POP DE	; restore real STKEND
+	POP AF	; restore count
+	DEC A	; decrease
+	JR skip_next	; loop back to SKIP-NEXT
 
 ; --------------------------------
 ; THE 'MEMORY LOCATION' SUBROUTINE
@@ -1844,16 +1844,16 @@ skip_next:
 
 ;; LOC-MEM
 loc_mem:
-        LD      C,A             ; store the original number $00-$1F.
-        RLCA                    ; double.
-        RLCA                    ; quadruple.
-        ADD     A,C             ; now add original value to multiply by five.
+	LD C,A	; store the original number $00-$1F.
+	RLCA	; double.
+	RLCA	; quadruple.
+	ADD A,C	; now add original value to multiply by five.
 
-        LD      C,A             ; place the result in C.
-        LD      B,$00           ; set B to 0.
-        ADD     HL,BC           ; add to form address of start of number in HL.
+	LD C,A	; place the result in C.
+	LD B,$00	; set B to 0.
+	ADD HL,BC	; add to form address of start of number in HL.
 
-        RET                     ; return.
+	RET	; return.
 
 ; -------------------------------------
 ; THE 'GET FROM MEMORY AREA' SUBROUTINE
@@ -1864,14 +1864,14 @@ loc_mem:
 
 ;; get-mem-xx
 get_mem_xx:
-        PUSH    DE              ; save STKEND
-        LD      HL,(mem)        ; MEM is base address of the memory cells.
-        CALL    loc_mem         ; routine LOC-MEM so that HL = first byte
-        CALL    move_fp         ; routine MOVE-FP moves 5 bytes with memory
-                                ; check.
-                                ; DE now points to new STKEND.
-        POP     HL              ; the original STKEND is now RESULT pointer.
-        RET                     ; return.
+	PUSH DE	; save STKEND
+	LD HL,(mem)	; MEM is base address of the memory cells.
+	CALL loc_mem	; routine LOC-MEM so that HL = first byte
+	CALL move_fp	; routine MOVE-FP moves 5 bytes with memory
+		; check.
+		; DE now points to new STKEND.
+	POP HL	; the original STKEND is now RESULT pointer.
+	RET	; return.
 
 ; ---------------------------------
 ; THE 'STACK A CONSTANT' SUBROUTINE
@@ -1890,19 +1890,19 @@ get_mem_xx:
 
 ;; stk-const-xx
 stk_const_xx:
-        LD      H,D             ; save STKEND - required for result
-        LD      L,E             ;
-        EXX                     ; swap
-        PUSH    HL              ; save pointer to next literal
-        LD      HL,stk_zero     ; Address: stk-zero - start of table of
-                                ; constants
-        EXX                     ;
-        CALL    skip_cons       ; routine SKIP-CONS
-        CALL    stk_const       ; routine STK-CONST
-        EXX                     ;
-        POP     HL              ; restore pointer to next literal.
-        EXX                     ;
-        RET                     ; return.
+	LD H,D	; save STKEND - required for result
+	LD L,E	;
+	EXX	; swap
+	PUSH HL	; save pointer to next literal
+	LD HL,stk_zero	; Address: stk-zero - start of table of
+		; constants
+	EXX	;
+	CALL skip_cons	; routine SKIP-CONS
+	CALL stk_const	; routine STK-CONST
+	EXX	;
+	POP HL	; restore pointer to next literal.
+	EXX	;
+	RET	; return.
 
 ; ---------------------------------------
 ; THE 'STORE IN A MEMORY AREA' SUBROUTINE
@@ -1919,18 +1919,18 @@ stk_const_xx:
 
 ;; st-mem-xx
 st_mem_xx:
-        PUSH    HL              ; save the result pointer.
-        EX      DE,HL           ; transfer to DE.
-        LD      HL,(mem)        ; fetch MEM the base of memory area.
-        CALL    loc_mem         ; routine LOC-MEM sets HL to the destination.
-        EX      DE,HL           ; swap - HL is start, DE is destination.
-        CALL    move_fp         ; routine MOVE-FP.
-                                ; note. a short ld bc,5; ldir
-                                ; the embedded memory check is not required
-                                ; so these instructions would be faster!
-        EX      DE,HL           ; DE = STKEND
-        POP     HL              ; restore original result pointer
-        RET                     ; return.
+	PUSH HL	; save the result pointer.
+	EX DE,HL	; transfer to DE.
+	LD HL,(mem)	; fetch MEM the base of memory area.
+	CALL loc_mem	; routine LOC-MEM sets HL to the destination.
+	EX DE,HL	; swap - HL is start, DE is destination.
+	CALL move_fp	; routine MOVE-FP.
+		; note. a short ld bc,5; ldir
+		; the embedded memory check is not required
+		; so these instructions would be faster!
+	EX DE,HL	; DE = STKEND
+	POP HL	; restore original result pointer
+	RET	; return.
 
 ; -------------------------
 ; THE 'EXCHANGE' SUBROUTINE
@@ -1943,24 +1943,24 @@ st_mem_xx:
 
 ;; exchange
 exchange:
-        LD      B,$05           ; there are five bytes to be swapped
+	LD B,$05	; there are five bytes to be swapped
 
 ; start of loop.
 
 ;; SWAP-BYTE
 swap_byte:
-        LD      A,(DE)          ; each byte of second
-        LD      C,(HL)          ; each byte of first
-        EX      DE,HL           ; swap pointers
-        LD      (DE),A          ; store each byte of first
-        LD      (HL),C          ; store each byte of second
-        INC     HL              ; advance both
-        INC     DE              ; pointers.
-        DJNZ    swap_byte       ; loop back to SWAP-BYTE until all 5 done.
+	LD A,(DE)	; each byte of second
+	LD C,(HL)	; each byte of first
+	EX DE,HL	; swap pointers
+	LD (DE),A	; store each byte of first
+	LD (HL),C	; store each byte of second
+	INC HL	; advance both
+	INC DE	; pointers.
+	DJNZ swap_byte	; loop back to SWAP-BYTE until all 5 done.
 
-        EX      DE,HL           ; even up the exchanges
-                                ; so that DE addresses STKEND.
-        RET                     ; return.
+	EX DE,HL	; even up the exchanges
+		; so that DE addresses STKEND.
+	RET	; return.
 
 ; ---------------------------------
 ; THE 'SERIES GENERATOR' SUBROUTINE
@@ -1981,67 +1981,67 @@ swap_byte:
 
 ;; series-xx
 series_xx:
-        LD      B,A             ; parameter $00 - $1F to B counter
-        CALL    gen_ent_1       ; routine GEN-ENT-1 is called.
-                                ; A recursive call to a special entry point
-                                ; in the calculator that puts the B register
-                                ; in the system variable BREG. The return
-                                ; address is the next location and where
-                                ; the calculator will expect its first
-                                ; instruction - now pointed to by HL'.
-                                ; The previous pointer to the series of
-                                ; five-byte numbers goes on the machine stack.
+	LD B,A	; parameter $00 - $1F to B counter
+	CALL gen_ent_1	; routine GEN-ENT-1 is called.
+		; A recursive call to a special entry point
+		; in the calculator that puts the B register
+		; in the system variable BREG. The return
+		; address is the next location and where
+		; the calculator will expect its first
+		; instruction - now pointed to by HL'.
+		; The previous pointer to the series of
+		; five-byte numbers goes on the machine stack.
 
 ; The initialization phase.
 
-        DEFB    cc_duplicate    ;;duplicate       x,x
-        DEFB    cc_addition     ;;addition        x+x
-        DEFB    cc_st_mem_0     ;;st-mem-0        x+x
-        DEFB    cc_delete       ;;delete          .
-        DEFB    cc_stk_zero     ;;stk-zero        0
-        DEFB    cc_st_mem_2     ;;st-mem-2        0
+	DEFB cc_duplicate	;;duplicate       x,x
+	DEFB cc_addition	;;addition        x+x
+	DEFB cc_st_mem_0	;;st-mem-0        x+x
+	DEFB cc_delete	;;delete          .
+	DEFB cc_stk_zero	;;stk-zero        0
+	DEFB cc_st_mem_2	;;st-mem-2        0
 
 ; a loop is now entered to perform the algebraic calculation for each of
 ; the numbers in the series
 
 ;; G-LOOP
 g_loop:
-        DEFB    cc_duplicate    ;;duplicate       v,v.
-        DEFB    cc_get_mem_0    ;;get-mem-0       v,v,x+2
-        DEFB    cc_multiply     ;;multiply        v,v*x+2
-        DEFB    cc_get_mem_2    ;;get-mem-2       v,v*x+2,v
-        DEFB    cc_st_mem_1     ;;st-mem-1
-        DEFB    cc_subtract     ;;subtract
-        DEFB    cc_end_calc     ;;end-calc
+	DEFB cc_duplicate	;;duplicate       v,v.
+	DEFB cc_get_mem_0	;;get-mem-0       v,v,x+2
+	DEFB cc_multiply	;;multiply        v,v*x+2
+	DEFB cc_get_mem_2	;;get-mem-2       v,v*x+2,v
+	DEFB cc_st_mem_1	;;st-mem-1
+	DEFB cc_subtract	;;subtract
+	DEFB cc_end_calc	;;end-calc
 
 ; the previous pointer is fetched from the machine stack to H'L' where it
 ; addresses one of the numbers of the series following the series literal.
 
-        CALL    stk_data        ; routine STK-DATA is called directly to
-                                ; push a value and advance H'L'.
-        CALL    gen_ent_2       ; routine GEN-ENT-2 recursively re-enters
-                                ; the calculator without disturbing
-                                ; system variable BREG
-                                ; H'L' value goes on the machine stack and is
-                                ; then loaded as usual with the next address.
+	CALL stk_data	; routine STK-DATA is called directly to
+		; push a value and advance H'L'.
+	CALL gen_ent_2	; routine GEN-ENT-2 recursively re-enters
+		; the calculator without disturbing
+		; system variable BREG
+		; H'L' value goes on the machine stack and is
+		; then loaded as usual with the next address.
 
-        DEFB    cc_addition     ;;addition
-        DEFB    cc_exchange     ;;exchange
-        DEFB    cc_st_mem_2     ;;st-mem-2
-        DEFB    cc_delete       ;;delete
+	DEFB cc_addition	;;addition
+	DEFB cc_exchange	;;exchange
+	DEFB cc_st_mem_2	;;st-mem-2
+	DEFB cc_delete	;;delete
 
-        DEFB    cc_dec_jr_nz    ;;dec-jr-nz
-        DEFB    g_loop - $      ;;back to L1A89, G-LOOP
+	DEFB cc_dec_jr_nz	;;dec-jr-nz
+	DEFB g_loop - $	;;back to L1A89, G-LOOP
 
 ; when the counted loop is complete the final subtraction yields the result
 ; for example SIN X.
 
-        DEFB    cc_get_mem_1    ;;get-mem-1
-        DEFB    cc_subtract     ;;subtract
-        DEFB    cc_end_calc     ;;end-calc
+	DEFB cc_get_mem_1	;;get-mem-1
+	DEFB cc_subtract	;;subtract
+	DEFB cc_end_calc	;;end-calc
 
-        RET                     ; return with H'L' pointing to location
-                                ; after last number in series.
+	RET	; return with H'L' pointing to location
+		; after last number in series.
 
 ; -----------------------
 ; Handle unary minus (18)
@@ -2051,24 +2051,24 @@ g_loop:
 ;; NEGATE
 ;; negate
 negate:
-        PUSH    DE
-        CALL    conv_to_fp      ; Original ZX81 routine only handles
-                                ; floating point format.
-                                ; TODO: handle integers as an optimised
-                                ; special case, rather than converting them
-        POP     DE
+	PUSH DE
+	CALL conv_to_fp	; Original ZX81 routine only handles
+		; floating point format.
+		; TODO: handle integers as an optimised
+		; special case, rather than converting them
+	POP DE
 
-        LD      A,(HL)          ; fetch exponent of last value on the
-                                ; calculator stack.
-        AND     A               ; test it.
-        RET     Z               ; return if zero.
+	LD A,(HL)	; fetch exponent of last value on the
+		; calculator stack.
+	AND A	; test it.
+	RET Z	; return if zero.
 
-        INC     HL              ; address the byte with the sign bit.
-        LD      A,(HL)          ; fetch to accumulator.
-        XOR     $80             ; toggle the sign bit.
-        LD      (HL),A          ; put it back.
-        DEC     HL              ; point to last value again.
-        RET                     ; return.
+	INC HL	; address the byte with the sign bit.
+	LD A,(HL)	; fetch to accumulator.
+	XOR $80	; toggle the sign bit.
+	LD (HL),A	; put it back.
+	DEC HL	; point to last value again.
+	RET	; return.
 
 ; -----------------------
 ; Absolute magnitude (27)
@@ -2078,38 +2078,38 @@ negate:
 
 ;; abs
 abs:
-        XOR     A               ; test whether this is in integer form
-        OR      (HL)
+	XOR A	; test whether this is in integer form
+	OR (HL)
 
-        INC     HL              ; point to byte with sign bit.
-        JR      Z,abs_int       ; number is integer, so treat as a special case
+	INC HL	; point to byte with sign bit.
+	JR Z,abs_int	; number is integer, so treat as a special case
 
-        RES     7,(HL)          ; make the sign positive.
-        DEC     HL              ; point to last value again.
-        RET                     ; return.
+	RES 7,(HL)	; make the sign positive.
+	DEC HL	; point to last value again.
+	RET	; return.
 
 abs_int:
-        INC     HL              ; test sign byte
-        OR      (HL)
-        JR      Z,abs_int_done  ; leave number alone if positive (or zero)
-        LD      (HL),0          ; clear sign byte
-        INC     HL
-        LD      A,(HL)          ; read 3rd and 4th bytes into BC,
-        CPL                     ; complementing as we go
-        LD      C,A
-        INC     HL
-        LD      A,(HL)
-        CPL
-        LD      B,A
-        INC     BC              ; incrementing the complemented value gives us
-        LD      (HL),B          ; the negated value. Write it back
-        DEC     HL
-        LD      (HL),C
-        DEC     HL
+	INC HL	; test sign byte
+	OR (HL)
+	JR Z,abs_int_done	; leave number alone if positive (or zero)
+	LD (HL),0	; clear sign byte
+	INC HL
+	LD A,(HL)	; read 3rd and 4th bytes into BC,
+	CPL	; complementing as we go
+	LD C,A
+	INC HL
+	LD A,(HL)
+	CPL
+	LD B,A
+	INC BC	; incrementing the complemented value gives us
+	LD (HL),B	; the negated value. Write it back
+	DEC HL
+	LD (HL),C
+	DEC HL
 
 abs_int_done:
-        DEC     HL
-        RET
+	DEC HL
+	RET
 
 ; -----------
 ; Signum (26)
@@ -2122,25 +2122,25 @@ abs_int_done:
 
 ;; sgn
 sgn:
-        CALL    test_zero       ; test if value is zero
-        RET     Z               ; and return immediately if so
-        LD      (HL),$81        ; exponent of 1 and - 1 is $81
-        INC     HL
-        LD      A,(HL)
-        AND     $80             ; clear all except sign bit
-        LD      (HL),A
-        INC     HL
-        XOR     A
-        LD      (HL),A          ; clear all other bytes
-        INC     HL
-        LD      (HL),A
-        INC     HL
-        LD      (HL),A
-        DEC     HL              ; return HL to point to exponent byte
-        DEC     HL
-        DEC     HL
-        DEC     HL
-        RET        
+	CALL test_zero	; test if value is zero
+	RET Z	; and return immediately if so
+	LD (HL),$81	; exponent of 1 and - 1 is $81
+	INC HL
+	LD A,(HL)
+	AND $80	; clear all except sign bit
+	LD (HL),A
+	INC HL
+	XOR A
+	LD (HL),A	; clear all other bytes
+	INC HL
+	LD (HL),A
+	INC HL
+	LD (HL),A
+	DEC HL	; return HL to point to exponent byte
+	DEC HL
+	DEC HL
+	DEC HL
+	RET
 
 ; -------------------------
 ; Handle PEEK function
@@ -2150,10 +2150,10 @@ sgn:
 
 ;; peek
 peek:
-        CALL    find_int        ; routine FIND-INT puts address in BC.
-        LD      A,(BC)          ; load contents into A register.
-        JP      stack_a         ; exit via STACK-A to put value on the
-                                ; calculator stack.
+	CALL find_int	; routine FIND-INT puts address in BC.
+	LD A,(BC)	; load contents into A register.
+	JP stack_a	; exit via STACK-A to put value on the
+		; calculator stack.
 
 ; -------------------------
 ; Handle IN function
@@ -2162,10 +2162,10 @@ peek:
 
 ;; fn_in
 fn_in:
-        CALL    find_int        ; routine FIND-INT puts address in BC.
-        IN      A,(C)           ; read port value into A register.
-        JP      stack_a         ; exit via STACK-A to put value on the
-                                ; calculator stack.
+	CALL find_int	; routine FIND-INT puts address in BC.
+	IN A,(C)	; read port value into A register.
+	JP stack_a	; exit via STACK-A to put value on the
+		; calculator stack.
 
 ; ---------------
 ; USR number
@@ -2178,16 +2178,16 @@ fn_in:
 
 ;; usr-no
 usr_no:
-        CALL    find_int        ; routine FIND-INT to fetch the
-                                ; supplied address into BC.
+	CALL find_int	; routine FIND-INT to fetch the
+		; supplied address into BC.
 
-        LD      HL,stack_bc     ; address: STACK-BC is
-        PUSH    HL              ; pushed onto the machine stack.
-        PUSH    BC              ; then the address of the machine code
-                                ; routine.
+	LD HL,stack_bc	; address: STACK-BC is
+	PUSH HL	; pushed onto the machine stack.
+	PUSH BC	; then the address of the machine code
+		; routine.
 
-        RET                     ; make an indirect jump to the routine
-                                ; and, hopefully, to STACK-BC also.
+	RET	; make an indirect jump to the routine
+		; and, hopefully, to STACK-BC also.
 
 ; -------------
 ; Test for zero
@@ -2199,17 +2199,17 @@ usr_no:
 ; additional bytes to be sure.
 
 test_zero:
-        LD      A,(HL)          ; collect exponent byte
-        INC     HL
-        OR      (HL)            ; overall number is 0 if these bytes
-        INC     HL              ; OR together as zero
-        OR      (HL)
-        INC     HL
-        OR      (HL)
-        DEC     HL              ; return HL to the first byte
-        DEC     HL
-        DEC     HL
-        RET
+	LD A,(HL)	; collect exponent byte
+	INC HL
+	OR (HL)	; overall number is 0 if these bytes
+	INC HL	; OR together as zero
+	OR (HL)
+	INC HL
+	OR (HL)
+	DEC HL	; return HL to the first byte
+	DEC HL
+	DEC HL
+	RET
 
 ; -----------------------
 ; Greater than zero ($33)
@@ -2221,15 +2221,15 @@ test_zero:
 ;; GREATER-0
 ;; greater-0
 greater_0:
-        CALL    test_zero       ; test for zero
-        RET     Z               ; return if so.
+	CALL test_zero	; test for zero
+	RET Z	; return if so.
 
-        LD      A,$FF           ; prepare XOR mask for sign bit
-        JR      sign_to_c       ; forward to SIGN-TO-C
-                                ; to put sign in carry
-                                ; (carry will become set if sign is positive)
-                                ; and then overwrite location with 1 or 0
-                                ; as appropriate.
+	LD A,$FF	; prepare XOR mask for sign bit
+	JR sign_to_c	; forward to SIGN-TO-C
+		; to put sign in carry
+		; (carry will become set if sign is positive)
+		; and then overwrite location with 1 or 0
+		; as appropriate.
 
 ; ------------------------
 ; Handle NOT operator ($2C)
@@ -2245,10 +2245,10 @@ greater_0:
 ;; NOT
 ;; not
 fn_not:
-        CALL    test_zero       ; returns with A=0 if overall value is zero
-        NEG                     ; negate - sets carry if non-zero.
-        CCF                     ; complement so carry set if zero, else reset.
-        JR      fp_0_1          ; forward to FP-0/1.
+	CALL test_zero	; returns with A=0 if overall value is zero
+	NEG	; negate - sets carry if non-zero.
+	CCF	; complement so carry set if zero, else reset.
+	JR fp_0_1	; forward to FP-0/1.
 
 ; -------------------
 ; Less than zero (32)
@@ -2259,17 +2259,17 @@ fn_not:
 
 ;; less-0
 less_0:
-        XOR     A               ; set xor mask to zero
-                                ; (carry will become set if sign is negative).
+	XOR A	; set xor mask to zero
+		; (carry will become set if sign is negative).
 
 ; transfer sign of mantissa to Carry Flag.
 
 ;; SIGN-TO-C
 sign_to_c:
-        INC     HL              ; address 2nd byte.
-        XOR     (HL)            ; bit 7 of HL will be set if number is negative.
-        DEC     HL              ; address 1st byte again.
-        RLCA                    ; rotate bit 7 of A to carry.
+	INC HL	; address 2nd byte.
+	XOR (HL)	; bit 7 of HL will be set if number is negative.
+	DEC HL	; address 1st byte again.
+	RLCA	; rotate bit 7 of A to carry.
 
 ; -----------
 ; Zero or one
@@ -2280,21 +2280,21 @@ sign_to_c:
 
 ;; FP-0/1
 fp_0_1:
-        PUSH    HL              ; save pointer to the first byte
-        LD      B,$05           ; five bytes to do.
+	PUSH HL	; save pointer to the first byte
+	LD B,$05	; five bytes to do.
 
 ;; FP-loop
 fp_loop:
-        LD      (HL),$00        ; insert a zero.
-        INC     HL              ;
-        DJNZ    fp_loop         ; repeat.
+	LD (HL),$00	; insert a zero.
+	INC HL	;
+	DJNZ fp_loop	; repeat.
 
-        POP     HL              ;
-        RET     NC              ;
+	POP HL	;
+	RET NC	;
 
-        LD      (HL),$81        ; make value 1. Doesn't really matter that we're
-                                ; not using the proper integer form...
-        RET                     ; return.
+	LD (HL),$81	; make value 1. Doesn't really matter that we're
+		; not using the proper integer form...
+	RET	; return.
 
 ; -----------------------
 ; Handle OR operator (07)
@@ -2312,14 +2312,14 @@ fp_loop:
 
 ;; or
 fn_or:
-        EX      DE,HL           ; test second number:
-        CALL    test_zero       ; check whether value at DE is zero
-        EX      DE,HL
-        RET     Z               ; return if zero.
+	EX DE,HL	; test second number:
+	CALL test_zero	; check whether value at DE is zero
+	EX DE,HL
+	RET Z	; return if zero.
 
-        SCF                     ; set carry flag
-        JR      fp_0_1          ; back to FP-0/1 to overwrite the first operand
-                                ; with the value 1.
+	SCF	; set carry flag
+	JR fp_0_1	; back to FP-0/1 to overwrite the first operand
+		; with the value 1.
 
 ; -----------------------------
 ; Handle number AND number (08)
@@ -2335,13 +2335,13 @@ fn_or:
 
 ;; no-&-no
 no_and_no:
-        EX      DE,HL           ; test second number:
-        CALL    test_zero       ; check whether value at DE is zero
-        EX      DE,HL
-        RET     NZ              ; return if not zero.
+	EX DE,HL	; test second number:
+	CALL test_zero	; check whether value at DE is zero
+	EX DE,HL
+	RET NZ	; return if not zero.
 
-        JR      fp_0_1          ; back to FP-0/1 to overwrite the first operand
-                                ; with zero for return value.
+	JR fp_0_1	; back to FP-0/1 to overwrite the first operand
+		; with zero for return value.
 
 ; -----------------------------------
 ; Perform comparison ($09-$0E, $11-$16)
@@ -2400,32 +2400,32 @@ no_and_no:
 
 ;; no-l-eql,etc.
 comparison:
-        LD      A,B             ; transfer literal to accumulator.
-        SUB     $08             ; subtract eight - which is not useful.
+	LD A,B	; transfer literal to accumulator.
+	SUB $08	; subtract eight - which is not useful.
 
-        BIT     2,A             ; isolate '>', '<', '='.
+	BIT 2,A	; isolate '>', '<', '='.
 
-        JR      NZ,ex_or_not    ; skip to EX-OR-NOT with these.
+	JR NZ,ex_or_not	; skip to EX-OR-NOT with these.
 
-        DEC     A               ; else make $00-$02, $08-$0A to match bits 0-2.
+	DEC A	; else make $00-$02, $08-$0A to match bits 0-2.
 
 ;; EX-OR-NOT
 ex_or_not:
-        RRCA                    ; the first RRCA sets carry for a swap.
-        JR      NC,nu_or_str    ; forward to NU-OR-STR with other 8 cases
+	RRCA	; the first RRCA sets carry for a swap.
+	JR NC,nu_or_str	; forward to NU-OR-STR with other 8 cases
 
 ; for the other 4 cases the two values on the calculator stack are exchanged.
 
-        PUSH    AF              ; save A and carry.
-        PUSH    HL              ; save HL - pointer to first operand.
-                                ; (DE points to second operand).
+	PUSH AF	; save A and carry.
+	PUSH HL	; save HL - pointer to first operand.
+		; (DE points to second operand).
 
-        CALL    exchange        ; routine exchange swaps the two values.
-                                ; (HL = second operand, DE = STKEND)
+	CALL exchange	; routine exchange swaps the two values.
+		; (HL = second operand, DE = STKEND)
 
-        POP     DE              ; DE = first operand
-        EX      DE,HL           ; as we were.
-        POP     AF              ; restore A and carry.
+	POP DE	; DE = first operand
+	EX DE,HL	; as we were.
+	POP AF	; restore A and carry.
 
 ; Note. it would be better if the 2nd RRCA preceded the string test.
 ; It would save two duplicate bytes and if we also got rid of that sub 8
@@ -2433,37 +2433,37 @@ ex_or_not:
 
 ;; NU-OR-STR
 nu_or_str:
-        BIT     2,A             ; test if a string comparison.
-        JR      NZ,strings      ; forward to STRINGS if so.
+	BIT 2,A	; test if a string comparison.
+	JR NZ,strings	; forward to STRINGS if so.
 
 ; continue with numeric comparisons.
 
-        RRCA                    ; 2nd RRCA causes eql/neql to set carry.
-        PUSH    AF              ; save A and carry
+	RRCA	; 2nd RRCA causes eql/neql to set carry.
+	PUSH AF	; save A and carry
 
-        CALL    subtract        ; routine subtract leaves result on stack.
-        JR      end_tests       ; forward to END-TESTS
+	CALL subtract	; routine subtract leaves result on stack.
+	JR end_tests	; forward to END-TESTS
 
 ; ---
 strings:
-        RST     fatal_error     ; TODO: string comparisons not implemented yet
+	RST fatal_error	; TODO: string comparisons not implemented yet
 
 ;   both numeric and string paths converge here.
 
 ;; END-TESTS
 end_tests:
-        POP     AF              ; pop carry  - will be set if eql/neql
-        PUSH    AF              ; save it again.
+	POP AF	; pop carry  - will be set if eql/neql
+	PUSH AF	; save it again.
 
-        CALL    C,fn_not        ; routine NOT sets true(1) if equal(0)
-                                ; or, for strings, applies true result.
-        CALL    greater_0       ; greater-0  ??????????
+	CALL C,fn_not	; routine NOT sets true(1) if equal(0)
+		; or, for strings, applies true result.
+	CALL greater_0	; greater-0  ??????????
 
 
-        POP     AF              ; pop A
-        RRCA                    ; the third RRCA - test for '<=', '>=' or '<>'.
-        CALL    NC,fn_not       ; apply a terminal NOT if so.
-        RET                     ; return.
+	POP AF	; pop A
+	RRCA	; the third RRCA - test for '<=', '>=' or '<>'.
+	CALL NC,fn_not	; apply a terminal NOT if so.
+	RET	; return.
 
 ; --------------------
 ; Check stack pointers
@@ -2479,14 +2479,14 @@ end_tests:
 
 ;; STK-PNTRS
 stk_pntrs:
-        LD      HL,(stkend)     ; fetch STKEND value from system variable.
-        LD      DE,$FFFB        ; the value -5
-        PUSH    HL              ; push STKEND value.
+	LD HL,(stkend)	; fetch STKEND value from system variable.
+	LD DE,$FFFB	; the value -5
+	PUSH HL	; push STKEND value.
 
-        ADD     HL,DE           ; subtract 5 from HL.
+	ADD HL,DE	; subtract 5 from HL.
 
-        POP     DE              ; pop STKEND to DE.
-        RET                     ; return.
+	POP DE	; pop STKEND to DE.
+	RET	; return.
 
 ; -------------------------------------
 ; THE 'DECREASE THE COUNTER' SUBROUTINE
@@ -2498,18 +2498,18 @@ stk_pntrs:
 
 ;; dec-jr-nz
 dec_jr_nz:
-        EXX                     ; switch in set that addresses code
+	EXX	; switch in set that addresses code
 
-        PUSH    HL              ; save pointer to offset byte
-        LD      HL,breg         ; address BREG in system variables
-        DEC     (HL)            ; decrement it
-        POP     HL              ; restore pointer
+	PUSH HL	; save pointer to offset byte
+	LD HL,breg	; address BREG in system variables
+	DEC (HL)	; decrement it
+	POP HL	; restore pointer
 
-        JR      NZ,jump_2       ; to JUMP-2 if not zero
+	JR NZ,jump_2	; to JUMP-2 if not zero
 
-        INC     HL              ; step past the jump length.
-        EXX                     ; switch in the main set.
-        RET                     ; return.
+	INC HL	; step past the jump length.
+	EXX	; switch in the main set.
+	RET	; return.
 
 ;   Note. as a general rule the calculator avoids using the IY register
 ;   otherwise the cumbersome 4 instructions in the middle could be replaced by
@@ -2533,24 +2533,24 @@ dec_jr_nz:
 ;; jump
 ;; JUMP
 jump:
-        EXX                     ;switch in pointer set
+	EXX	;switch in pointer set
 
 ;; JUMP-2
 jump_2:
-        LD      E,(HL)          ; the jump byte 0-127 forward, 128-255 back.
-        XOR     A               ; clear accumulator.
-        BIT     7,E             ; test if negative jump
-        JR      Z,jump_3        ; skip, if positive, to JUMP-3.
+	LD E,(HL)	; the jump byte 0-127 forward, 128-255 back.
+	XOR A	; clear accumulator.
+	BIT 7,E	; test if negative jump
+	JR Z,jump_3	; skip, if positive, to JUMP-3.
 
-        CPL                     ; else change to $FF.
+	CPL	; else change to $FF.
 
 ;; JUMP-3
 jump_3:
-        LD      D,A             ; transfer to high byte.
-        ADD     HL,DE           ; advance calculator pointer forward or back.
+	LD D,A	; transfer to high byte.
+	ADD HL,DE	; advance calculator pointer forward or back.
 
-        EXX                     ; switch out pointer set.
-        RET                     ; return.
+	EXX	; switch out pointer set.
+	RET	; return.
 
 ; -----------------------------
 ; THE 'JUMP ON TRUE' SUBROUTINE
@@ -2562,16 +2562,16 @@ jump_3:
 
 ;; jump-true
 jump_true:
-        EX      DE,HL
-        CALL    test_zero       ; check whether value at DE is zero
-        EX      DE,HL
+	EX DE,HL
+	CALL test_zero	; check whether value at DE is zero
+	EX DE,HL
 
-        JR      NZ,jump         ; back to JUMP if true (1).
+	JR NZ,jump	; back to JUMP if true (1).
 
-        EXX                     ; else switch in the pointer set.
-        INC     HL              ; step past the jump length.
-        EXX                     ; switch in the main set.
-        RET                     ; return.
+	EXX	; else switch in the pointer set.
+	INC HL	; step past the jump length.
+	EXX	; switch in the main set.
+	RET	; return.
 
 ; ------------------------
 ; THE 'MODULUS' SUBROUTINE
@@ -2588,22 +2588,22 @@ jump_true:
 
 ;; n-mod-m
 n_mod_m:
-        RST     fp_calc         ;; FP-CALC          17, 3.
-        DEFB    cc_st_mem_0     ;;st-mem-0          17, 3.
-        DEFB    cc_delete       ;;delete            17.
-        DEFB    cc_duplicate    ;;duplicate         17, 17.
-        DEFB    cc_get_mem_0    ;;get-mem-0         17, 17, 3.
-        DEFB    cc_division     ;;division          17, 17/3.
-        DEFB    cc_int          ;;int               17, 5.
-        DEFB    cc_get_mem_0    ;;get-mem-0         17, 5, 3.
-        DEFB    cc_exchange     ;;exchange          17, 3, 5.
-        DEFB    cc_st_mem_0     ;;st-mem-0          17, 3, 5.
-        DEFB    cc_multiply     ;;multiply          17, 15.
-        DEFB    cc_subtract     ;;subtract          2.
-        DEFB    cc_get_mem_0    ;;get-mem-0         2, 5.
-        DEFB    cc_end_calc     ;;end-calc          2, 5.
+	RST fp_calc	;; FP-CALC          17, 3.
+	DEFB cc_st_mem_0	;;st-mem-0          17, 3.
+	DEFB cc_delete	;;delete            17.
+	DEFB cc_duplicate	;;duplicate         17, 17.
+	DEFB cc_get_mem_0	;;get-mem-0         17, 17, 3.
+	DEFB cc_division	;;division          17, 17/3.
+	DEFB cc_int	;;int               17, 5.
+	DEFB cc_get_mem_0	;;get-mem-0         17, 5, 3.
+	DEFB cc_exchange	;;exchange          17, 3, 5.
+	DEFB cc_st_mem_0	;;st-mem-0          17, 3, 5.
+	DEFB cc_multiply	;;multiply          17, 15.
+	DEFB cc_subtract	;;subtract          2.
+	DEFB cc_get_mem_0	;;get-mem-0         2, 5.
+	DEFB cc_end_calc	;;end-calc          2, 5.
 
-        RET                     ; return.
+	RET	; return.
 
 ; ----------------------
 ; THE 'INTEGER' FUNCTION
@@ -2617,38 +2617,38 @@ n_mod_m:
 
 ;; int
 int:
-        RST     fp_calc         ;; FP-CALC              x.    (= 3.4 or -3.4).
-        DEFB    cc_duplicate    ;;duplicate             x, x.
-        DEFB    cc_less_0       ;;less-0                x, (1/0)
-        DEFB    cc_jump_true    ;;jump-true             x, (1/0)
-        DEFB    x_neg - $       ;;to X-NEG
+	RST fp_calc	;; FP-CALC              x.    (= 3.4 or -3.4).
+	DEFB cc_duplicate	;;duplicate             x, x.
+	DEFB cc_less_0	;;less-0                x, (1/0)
+	DEFB cc_jump_true	;;jump-true             x, (1/0)
+	DEFB x_neg - $	;;to X-NEG
 
-        DEFB    cc_truncate     ;;truncate              trunc 3.4 = 3.
-        DEFB    cc_end_calc     ;;end-calc              3.
+	DEFB cc_truncate	;;truncate              trunc 3.4 = 3.
+	DEFB cc_end_calc	;;end-calc              3.
 
-        RET                     ; return with + int x on stack.
+	RET	; return with + int x on stack.
 
 
 ;; X-NEG
 x_neg:
-        DEFB    cc_duplicate    ;;duplicate             -3.4, -3.4.
-        DEFB    cc_truncate     ;;truncate              -3.4, -3.
-        DEFB    cc_st_mem_0     ;;st-mem-0              -3.4, -3.
-        DEFB    cc_subtract     ;;subtract              -.4
-        DEFB    cc_get_mem_0    ;;get-mem-0             -.4, -3.
-        DEFB    cc_exchange     ;;exchange              -3, -.4.
-        DEFB    cc_fn_not       ;;not                   -3, (0).
-        DEFB    cc_jump_true    ;;jump-true             -3.
-        DEFB    exit - $        ;;to L1C59, EXIT        -3.
+	DEFB cc_duplicate	;;duplicate             -3.4, -3.4.
+	DEFB cc_truncate	;;truncate              -3.4, -3.
+	DEFB cc_st_mem_0	;;st-mem-0              -3.4, -3.
+	DEFB cc_subtract	;;subtract              -.4
+	DEFB cc_get_mem_0	;;get-mem-0             -.4, -3.
+	DEFB cc_exchange	;;exchange              -3, -.4.
+	DEFB cc_fn_not	;;not                   -3, (0).
+	DEFB cc_jump_true	;;jump-true             -3.
+	DEFB exit - $	;;to L1C59, EXIT        -3.
 
-        DEFB    cc_stk_one      ;;stk-one               -3, 1.
-        DEFB    cc_subtract     ;;subtract              -4.
+	DEFB cc_stk_one	;;stk-one               -3, 1.
+	DEFB cc_subtract	;;subtract              -4.
 
 ;; EXIT
 exit:
-        DEFB    cc_end_calc     ;;end-calc              -4.
+	DEFB cc_end_calc	;;end-calc              -4.
 
-        RET                     ; return.
+	RET	; return.
 
 ; ----------------
 ; Exponential (23)
@@ -2659,76 +2659,76 @@ exit:
 ;; EXP
 ;; exp
 exp:
-        RST     fp_calc         ;; FP-CALC
-        DEFB    cc_stk_data     ;;stk-data
-        DEFB    $F1             ;;Exponent: $81, Bytes: 4
-        DEFB    $38,$AA,$3B,$29 ;;
-        DEFB    cc_multiply     ;;multiply
-        DEFB    cc_duplicate    ;;duplicate
-        DEFB    cc_int          ;;int
-        DEFB    cc_st_mem_3     ;;st-mem-3
-        DEFB    cc_subtract     ;;subtract
-        DEFB    cc_duplicate    ;;duplicate
-        DEFB    cc_addition     ;;addition
-        DEFB    cc_stk_one      ;;stk-one
-        DEFB    cc_subtract     ;;subtract
-        DEFB    cc_series_08    ;;series-08
-        DEFB    $13             ;;Exponent: $63, Bytes: 1
-        DEFB    $36             ;;(+00,+00,+00)
-        DEFB    $58             ;;Exponent: $68, Bytes: 2
-        DEFB    $65,$66         ;;(+00,+00)
-        DEFB    $9D             ;;Exponent: $6D, Bytes: 3
-        DEFB    $78,$65,$40     ;;(+00)
-        DEFB    $A2             ;;Exponent: $72, Bytes: 3
-        DEFB    $60,$32,$C9     ;;(+00)
-        DEFB    $E7             ;;Exponent: $77, Bytes: 4
-        DEFB    $21,$F7,$AF,$24 ;;
-        DEFB    $EB             ;;Exponent: $7B, Bytes: 4
-        DEFB    $2F,$B0,$B0,$14 ;;
-        DEFB    $EE             ;;Exponent: $7E, Bytes: 4
-        DEFB    $7E,$BB,$94,$58 ;;
-        DEFB    $F1             ;;Exponent: $81, Bytes: 4
-        DEFB    $3A,$7E,$F8,$CF ;;
-        DEFB    cc_get_mem_3    ;;get-mem-3
-        DEFB    cc_end_calc     ;;end-calc
+	RST fp_calc	;; FP-CALC
+	DEFB cc_stk_data	;;stk-data
+	DEFB $F1	;;Exponent: $81, Bytes: 4
+	DEFB $38,$AA,$3B,$29	;;
+	DEFB cc_multiply	;;multiply
+	DEFB cc_duplicate	;;duplicate
+	DEFB cc_int	;;int
+	DEFB cc_st_mem_3	;;st-mem-3
+	DEFB cc_subtract	;;subtract
+	DEFB cc_duplicate	;;duplicate
+	DEFB cc_addition	;;addition
+	DEFB cc_stk_one	;;stk-one
+	DEFB cc_subtract	;;subtract
+	DEFB cc_series_08	;;series-08
+	DEFB $13	;;Exponent: $63, Bytes: 1
+	DEFB $36	;;(+00,+00,+00)
+	DEFB $58	;;Exponent: $68, Bytes: 2
+	DEFB $65,$66	;;(+00,+00)
+	DEFB $9D	;;Exponent: $6D, Bytes: 3
+	DEFB $78,$65,$40	;;(+00)
+	DEFB $A2	;;Exponent: $72, Bytes: 3
+	DEFB $60,$32,$C9	;;(+00)
+	DEFB $E7	;;Exponent: $77, Bytes: 4
+	DEFB $21,$F7,$AF,$24	;;
+	DEFB $EB	;;Exponent: $7B, Bytes: 4
+	DEFB $2F,$B0,$B0,$14	;;
+	DEFB $EE	;;Exponent: $7E, Bytes: 4
+	DEFB $7E,$BB,$94,$58	;;
+	DEFB $F1	;;Exponent: $81, Bytes: 4
+	DEFB $3A,$7E,$F8,$CF	;;
+	DEFB cc_get_mem_3	;;get-mem-3
+	DEFB cc_end_calc	;;end-calc
 
-        CALL    fp_to_a         ; routine FP-TO-A
-        JR      NZ,n_negtv      ; to N-NEGTV
+	CALL fp_to_a	; routine FP-TO-A
+	JR NZ,n_negtv	; to N-NEGTV
 
-        JR      C,report_6b     ; to REPORT-6b
+	JR C,report_6b	; to REPORT-6b
 
-        ADD     A,(HL)          ;
-        JR      NC,result_ok    ; to RESULT-OK
+	ADD A,(HL)	;
+	JR NC,result_ok	; to RESULT-OK
 
 
 ;; REPORT-6b
 report_6b:
-        rst error
-        db err_code_number_too_big
+	rst error
+	db err_code_number_too_big
 
 ;; N-NEGTV
 n_negtv:
-        JR      C,rslt_zero     ; to RSLT-ZERO
+	JR C,rslt_zero	; to RSLT-ZERO
 
-        SUB     (HL)            ;
-        JR      NC,rslt_zero    ; to RSLT-ZERO
+	SUB (HL)	;
+	JR NC,rslt_zero	; to RSLT-ZERO
 
-        NEG                     ; Negate
+	NEG	; Negate
 
 ;; RESULT-OK
 result_ok:
-        LD      (HL),A          ;
-        RET                     ; return.
+	LD (HL),A	;
+	RET	; return.
 
 
 ;; RSLT-ZERO
 rslt_zero:
-        RST     fp_calc         ;; FP-CALC
-        DEFB    cc_delete       ;;delete
-        DEFB    cc_stk_zero     ;;stk-zero
-        DEFB    cc_end_calc     ;;end-calc
+	RST fp_calc	;; FP-CALC
+	DEFB cc_delete	;;delete
+	DEFB cc_stk_zero	;;stk-zero
+	DEFB cc_end_calc	;;end-calc
 
-        RET                     ; return.
+	RET	; return.
 
 ; --------------------------------
 ; THE 'NATURAL LOGARITHM' FUNCTION
@@ -2778,106 +2778,106 @@ rslt_zero:
 
 ;; ln
 ln:
-        CALL    conv_to_fp      ;; Routine assumes floating point form.
-                                ;; (MW: TODO: Figure out where... :-) )
-        RST     fp_calc         ;; FP-CALC
-        DEFB    cc_duplicate    ;;duplicate
-        DEFB    cc_greater_0    ;;greater-0
-        DEFB    cc_jump_true    ;;jump-true
-        DEFB    valid - $       ;;to VALID
+	CALL conv_to_fp	;; Routine assumes floating point form.
+		;; (MW: TODO: Figure out where... :-) )
+	RST fp_calc	;; FP-CALC
+	DEFB cc_duplicate	;;duplicate
+	DEFB cc_greater_0	;;greater-0
+	DEFB cc_jump_true	;;jump-true
+	DEFB valid - $	;;to VALID
 
-        DEFB    cc_end_calc     ;;end-calc
+	DEFB cc_end_calc	;;end-calc
 
 
 ;; REPORT-Ab
 report_ab:
-        RST     error           ; ERROR-1
-        DEFB    err_code_invalid_argument ; Error Report: Invalid argument
+	RST error	; ERROR-1
+	DEFB err_code_invalid_argument	; Error Report: Invalid argument
 
 ;; VALID
 valid:
-        DEFB    cc_stk_zero     ;;stk-zero              Note. not 
-        DEFB    cc_delete       ;;delete                necessary.
-        DEFB    cc_end_calc     ;;end-calc
-        LD      A,(HL)          ;
+	DEFB cc_stk_zero	;;stk-zero              Note. not
+	DEFB cc_delete	;;delete                necessary.
+	DEFB cc_end_calc	;;end-calc
+	LD A,(HL)	;
 
-        LD      (HL),$80        ;
-        CALL    stack_a         ; routine STACK-A
+	LD (HL),$80	;
+	CALL stack_a	; routine STACK-A
 
-        RST     fp_calc         ;; FP-CALC
-        DEFB    cc_stk_data     ;;stk-data
-        DEFB    $38             ;;Exponent: $88, Bytes: 1
-        DEFB    $00             ;;(+00,+00,+00)
-        DEFB    cc_subtract     ;;subtract
-        DEFB    cc_exchange     ;;exchange
-        DEFB    cc_duplicate    ;;duplicate
-        DEFB    cc_stk_data     ;;stk-data
-        DEFB    $F0             ;;Exponent: $80, Bytes: 4
-        DEFB    $4C,$CC,$CC,$CD ;;
-        DEFB    cc_subtract     ;;subtract
-        DEFB    cc_greater_0    ;;greater-0
-        DEFB    cc_jump_true    ;;jump-true
-        DEFB    gre_8 - $       ;;to GRE.8
+	RST fp_calc	;; FP-CALC
+	DEFB cc_stk_data	;;stk-data
+	DEFB $38	;;Exponent: $88, Bytes: 1
+	DEFB $00	;;(+00,+00,+00)
+	DEFB cc_subtract	;;subtract
+	DEFB cc_exchange	;;exchange
+	DEFB cc_duplicate	;;duplicate
+	DEFB cc_stk_data	;;stk-data
+	DEFB $F0	;;Exponent: $80, Bytes: 4
+	DEFB $4C,$CC,$CC,$CD	;;
+	DEFB cc_subtract	;;subtract
+	DEFB cc_greater_0	;;greater-0
+	DEFB cc_jump_true	;;jump-true
+	DEFB gre_8 - $	;;to GRE.8
 
-        DEFB    cc_exchange     ;;exchange
-        DEFB    cc_stk_one      ;;stk-one
-        DEFB    cc_subtract     ;;subtract
-        DEFB    cc_exchange     ;;exchange
-        DEFB    cc_end_calc     ;;end-calc
+	DEFB cc_exchange	;;exchange
+	DEFB cc_stk_one	;;stk-one
+	DEFB cc_subtract	;;subtract
+	DEFB cc_exchange	;;exchange
+	DEFB cc_end_calc	;;end-calc
 
-        INC     (HL)            ;
+	INC (HL)	;
 
-        RST     fp_calc         ;; FP-CALC
+	RST fp_calc	;; FP-CALC
 
 ;; GRE.8
 gre_8:
-        DEFB    cc_exchange     ;;exchange
-        DEFB    cc_stk_data     ;;stk-data
-        DEFB    $F0             ;;Exponent: $80, Bytes: 4
-        DEFB    $31,$72,$17,$F8 ;;
-        DEFB    cc_multiply     ;;multiply
-        DEFB    cc_exchange     ;;exchange
-        DEFB    cc_stk_half     ;;stk-half
-        DEFB    cc_subtract     ;;subtract
-        DEFB    cc_stk_half     ;;stk-half
-        DEFB    cc_subtract     ;;subtract
-        DEFB    cc_duplicate    ;;duplicate
-        DEFB    cc_stk_data     ;;stk-data
-        DEFB    $32             ;;Exponent: $82, Bytes: 1
-        DEFB    $20             ;;(+00,+00,+00)
-        DEFB    cc_multiply     ;;multiply
-        DEFB    cc_stk_half     ;;stk-half
-        DEFB    cc_subtract     ;;subtract
-        DEFB    cc_series_0c    ;;series-0C
-        DEFB    $11             ;;Exponent: $61, Bytes: 1
-        DEFB    $AC             ;;(+00,+00,+00)
-        DEFB    $14             ;;Exponent: $64, Bytes: 1
-        DEFB    $09             ;;(+00,+00,+00)
-        DEFB    $56             ;;Exponent: $66, Bytes: 2
-        DEFB    $DA,$A5         ;;(+00,+00)
-        DEFB    $59             ;;Exponent: $69, Bytes: 2
-        DEFB    $30,$C5         ;;(+00,+00)
-        DEFB    $5C             ;;Exponent: $6C, Bytes: 2
-        DEFB    $90,$AA         ;;(+00,+00)
-        DEFB    $9E             ;;Exponent: $6E, Bytes: 3
-        DEFB    $70,$6F,$61     ;;(+00)
-        DEFB    $A1             ;;Exponent: $71, Bytes: 3
-        DEFB    $CB,$DA,$96     ;;(+00)
-        DEFB    $A4             ;;Exponent: $74, Bytes: 3
-        DEFB    $31,$9F,$B4     ;;(+00)
-        DEFB    $E7             ;;Exponent: $77, Bytes: 4
-        DEFB    $A0,$FE,$5C,$FC ;;
-        DEFB    $EA             ;;Exponent: $7A, Bytes: 4
-        DEFB    $1B,$43,$CA,$36 ;;
-        DEFB    $ED             ;;Exponent: $7D, Bytes: 4
-        DEFB    $A7,$9C,$7E,$5E ;;
-        DEFB    $F0             ;;Exponent: $80, Bytes: 4
-        DEFB    $6E,$23,$80,$93 ;;
-        DEFB    cc_multiply     ;;multiply
-        DEFB    cc_addition     ;;addition
-        DEFB    cc_end_calc     ;;end-calc
+	DEFB cc_exchange	;;exchange
+	DEFB cc_stk_data	;;stk-data
+	DEFB $F0	;;Exponent: $80, Bytes: 4
+	DEFB $31,$72,$17,$F8	;;
+	DEFB cc_multiply	;;multiply
+	DEFB cc_exchange	;;exchange
+	DEFB cc_stk_half	;;stk-half
+	DEFB cc_subtract	;;subtract
+	DEFB cc_stk_half	;;stk-half
+	DEFB cc_subtract	;;subtract
+	DEFB cc_duplicate	;;duplicate
+	DEFB cc_stk_data	;;stk-data
+	DEFB $32	;;Exponent: $82, Bytes: 1
+	DEFB $20	;;(+00,+00,+00)
+	DEFB cc_multiply	;;multiply
+	DEFB cc_stk_half	;;stk-half
+	DEFB cc_subtract	;;subtract
+	DEFB cc_series_0c	;;series-0C
+	DEFB $11	;;Exponent: $61, Bytes: 1
+	DEFB $AC	;;(+00,+00,+00)
+	DEFB $14	;;Exponent: $64, Bytes: 1
+	DEFB $09	;;(+00,+00,+00)
+	DEFB $56	;;Exponent: $66, Bytes: 2
+	DEFB $DA,$A5	;;(+00,+00)
+	DEFB $59	;;Exponent: $69, Bytes: 2
+	DEFB $30,$C5	;;(+00,+00)
+	DEFB $5C	;;Exponent: $6C, Bytes: 2
+	DEFB $90,$AA	;;(+00,+00)
+	DEFB $9E	;;Exponent: $6E, Bytes: 3
+	DEFB $70,$6F,$61	;;(+00)
+	DEFB $A1	;;Exponent: $71, Bytes: 3
+	DEFB $CB,$DA,$96	;;(+00)
+	DEFB $A4	;;Exponent: $74, Bytes: 3
+	DEFB $31,$9F,$B4	;;(+00)
+	DEFB $E7	;;Exponent: $77, Bytes: 4
+	DEFB $A0,$FE,$5C,$FC	;;
+	DEFB $EA	;;Exponent: $7A, Bytes: 4
+	DEFB $1B,$43,$CA,$36	;;
+	DEFB $ED	;;Exponent: $7D, Bytes: 4
+	DEFB $A7,$9C,$7E,$5E	;;
+	DEFB $F0	;;Exponent: $80, Bytes: 4
+	DEFB $6E,$23,$80,$93	;;
+	DEFB cc_multiply	;;multiply
+	DEFB cc_addition	;;addition
+	DEFB cc_end_calc	;;end-calc
 
-        RET                     ; return.
+	RET	; return.
 
 ; -----------------------------
 ; THE 'TRIGONOMETRIC' FUNCTIONS
@@ -2937,73 +2937,73 @@ gre_8:
 
 ;; get-argt
 get_argt:
-        RST     fp_calc         ;; FP-CALC         X.
-        DEFB    cc_stk_data     ;;stk-data
-        DEFB    $EE             ;;Exponent: $7E, 
-                                ;;Bytes: 4
-        DEFB    $22,$F9,$83,$6E ;;                 X, 1/(2*PI)             
-        DEFB    cc_multiply     ;;multiply         X/(2*PI) = fraction
+	RST fp_calc	;; FP-CALC         X.
+	DEFB cc_stk_data	;;stk-data
+	DEFB $EE	;;Exponent: $7E,
+		;;Bytes: 4
+	DEFB $22,$F9,$83,$6E	;;                 X, 1/(2*PI)
+	DEFB cc_multiply	;;multiply         X/(2*PI) = fraction
 
-        DEFB    cc_duplicate    ;;duplicate             
-        DEFB    cc_stk_half     ;;stk-half
-        DEFB    cc_addition     ;;addition
-        DEFB    cc_int          ;;int
+	DEFB cc_duplicate	;;duplicate
+	DEFB cc_stk_half	;;stk-half
+	DEFB cc_addition	;;addition
+	DEFB cc_int	;;int
 
-        DEFB    cc_subtract     ;;subtract         now range -.5 to .5
+	DEFB cc_subtract	;;subtract         now range -.5 to .5
 
-        DEFB    cc_duplicate    ;;duplicate
-        DEFB    cc_addition     ;;addition         now range -1 to 1.
-        DEFB    cc_duplicate    ;;duplicate
-        DEFB    cc_addition     ;;addition         now range -2 to 2.
+	DEFB cc_duplicate	;;duplicate
+	DEFB cc_addition	;;addition         now range -1 to 1.
+	DEFB cc_duplicate	;;duplicate
+	DEFB cc_addition	;;addition         now range -2 to 2.
 
 ;   quadrant I (0 to +1) and quadrant IV (-1 to 0) are now correct.
 ;   quadrant II ranges +1 to +2.
 ;   quadrant III ranges -2 to -1.
 
-        DEFB    cc_duplicate    ;;duplicate        Y, Y.
-        DEFB    cc_abs          ;;abs              Y, abs(Y).    range 1 to 2
-        DEFB    cc_stk_one      ;;stk-one          Y, abs(Y), 1.
-        DEFB    cc_subtract     ;;subtract         Y, abs(Y)-1.  range 0 to 1
-        DEFB    cc_duplicate    ;;duplicate        Y, Z, Z.
-        DEFB    cc_greater_0    ;;greater-0        Y, Z, (1/0).
+	DEFB cc_duplicate	;;duplicate        Y, Y.
+	DEFB cc_abs	;;abs              Y, abs(Y).    range 1 to 2
+	DEFB cc_stk_one	;;stk-one          Y, abs(Y), 1.
+	DEFB cc_subtract	;;subtract         Y, abs(Y)-1.  range 0 to 1
+	DEFB cc_duplicate	;;duplicate        Y, Z, Z.
+	DEFB cc_greater_0	;;greater-0        Y, Z, (1/0).
 
-        DEFB    cc_st_mem_0     ;;st-mem-0         store as possible sign 
-                                ;;                 for cosine function.
+	DEFB cc_st_mem_0	;;st-mem-0         store as possible sign
+		;;                 for cosine function.
 
-        DEFB    cc_jump_true    ;;jump-true
-        DEFB    zplus - $       ;;to ZPLUS  with quadrants II and III
+	DEFB cc_jump_true	;;jump-true
+	DEFB zplus - $	;;to ZPLUS  with quadrants II and III
 
 ;   else the angle lies in quadrant I or IV and value Y is already correct.
 
-        DEFB    cc_delete       ;;delete          Y    delete test value.
-        DEFB    cc_end_calc     ;;end-calc        Y.
+	DEFB cc_delete	;;delete          Y    delete test value.
+	DEFB cc_end_calc	;;end-calc        Y.
 
-        RET                     ; return.         with Q1 and Q4 >>>
+	RET	; return.         with Q1 and Q4 >>>
 
 ;   The branch was here with quadrants II (0 to 1) and III (1 to 0).
 ;   Y will hold -2 to -1 if this is quadrant III.
 
 ;; ZPLUS
 zplus:
-        DEFB    cc_stk_one      ;;stk-one         Y, Z, 1
-        DEFB    cc_subtract     ;;subtract        Y, Z-1.       Q3 = 0 to -1
-        DEFB    cc_exchange     ;;exchange        Z-1, Y.
-        DEFB    cc_less_0       ;;less-0          Z-1, (1/0).
-        DEFB    cc_jump_true    ;;jump-true       Z-1.
-        DEFB    yneg - $        ;;to YNEG
-                                ;;if angle in quadrant III
+	DEFB cc_stk_one	;;stk-one         Y, Z, 1
+	DEFB cc_subtract	;;subtract        Y, Z-1.       Q3 = 0 to -1
+	DEFB cc_exchange	;;exchange        Z-1, Y.
+	DEFB cc_less_0	;;less-0          Z-1, (1/0).
+	DEFB cc_jump_true	;;jump-true       Z-1.
+	DEFB yneg - $	;;to YNEG
+		;;if angle in quadrant III
 
 ;   else angle is within quadrant II (-1 to 0)
 
-        DEFB    cc_negate       ;;negate          range +1 to 0
+	DEFB cc_negate	;;negate          range +1 to 0
 
 
 ;; YNEG
 
 yneg:
-        DEFB    cc_end_calc     ;;end-calc        quadrants II and III correct.
+	DEFB cc_end_calc	;;end-calc        quadrants II and III correct.
 
-        RET                     ; return.
+	RET	; return.
 
 ; ---------------------
 ; THE 'COSINE' FUNCTION
@@ -3033,23 +3033,23 @@ yneg:
 
 ;; cos
 cos:
-        RST     fp_calc         ;; FP-CALC              angle in radians.
-        DEFB    cc_get_argt     ;;get-argt              X       reduce -1 to +1
+	RST fp_calc	;; FP-CALC              angle in radians.
+	DEFB cc_get_argt	;;get-argt              X       reduce -1 to +1
 
-        DEFB    cc_abs          ;;abs                   ABS X   0 to 1
-        DEFB    cc_stk_one      ;;stk-one               ABS X, 1.
-        DEFB    cc_subtract     ;;subtract              now opposite angle 
-                                ;;                      though negative sign.
-        DEFB    cc_get_mem_0    ;;get-mem-0             fetch sign indicator.
-        DEFB    cc_jump_true    ;;jump-true
-        DEFB    c_ent - $       ;;fwd to C-ENT
-                                ;;forward to common code if in QII or QIII 
+	DEFB cc_abs	;;abs                   ABS X   0 to 1
+	DEFB cc_stk_one	;;stk-one               ABS X, 1.
+	DEFB cc_subtract	;;subtract              now opposite angle
+		;;                      though negative sign.
+	DEFB cc_get_mem_0	;;get-mem-0             fetch sign indicator.
+	DEFB cc_jump_true	;;jump-true
+	DEFB c_ent - $	;;fwd to C-ENT
+		;;forward to common code if in QII or QIII
 
 
-        DEFB    cc_negate       ;;negate                else make positive.
-        DEFB    cc_jump         ;;jump
-        DEFB    c_ent - $       ;;fwd to C-ENT
-                                ;;with quadrants QI and QIV 
+	DEFB cc_negate	;;negate                else make positive.
+	DEFB cc_jump	;;jump
+	DEFB c_ent - $	;;fwd to C-ENT
+		;;with quadrants QI and QIV
 
 ; -------------------
 ; THE 'SINE' FUNCTION
@@ -3073,37 +3073,37 @@ cos:
 
 ;; sin
 sin:
-        RST     fp_calc         ;; FP-CALC      angle in radians
-        DEFB    cc_get_argt     ;;get-argt      reduce - sign now correct.
+	RST fp_calc	;; FP-CALC      angle in radians
+	DEFB cc_get_argt	;;get-argt      reduce - sign now correct.
 
 ;; C-ENT
 c_ent:
-        DEFB    cc_duplicate    ;;duplicate
-        DEFB    cc_duplicate    ;;duplicate
-        DEFB    cc_multiply     ;;multiply
-        DEFB    cc_duplicate    ;;duplicate
-        DEFB    cc_addition     ;;addition
-        DEFB    cc_stk_one      ;;stk-one
-        DEFB    cc_subtract     ;;subtract
+	DEFB cc_duplicate	;;duplicate
+	DEFB cc_duplicate	;;duplicate
+	DEFB cc_multiply	;;multiply
+	DEFB cc_duplicate	;;duplicate
+	DEFB cc_addition	;;addition
+	DEFB cc_stk_one	;;stk-one
+	DEFB cc_subtract	;;subtract
 
-        DEFB    cc_series_06    ;;series-06
-        DEFB    $14             ;;Exponent: $64, Bytes: 1
-        DEFB    $E6             ;;(+00,+00,+00)
-        DEFB    $5C             ;;Exponent: $6C, Bytes: 2
-        DEFB    $1F,$0B         ;;(+00,+00)
-        DEFB    $A3             ;;Exponent: $73, Bytes: 3
-        DEFB    $8F,$38,$EE     ;;(+00)
-        DEFB    $E9             ;;Exponent: $79, Bytes: 4
-        DEFB    $15,$63,$BB,$23 ;;
-        DEFB    $EE             ;;Exponent: $7E, Bytes: 4
-        DEFB    $92,$0D,$CD,$ED ;;
-        DEFB    $F1             ;;Exponent: $81, Bytes: 4
-        DEFB    $23,$5D,$1B,$EA ;;
+	DEFB cc_series_06	;;series-06
+	DEFB $14	;;Exponent: $64, Bytes: 1
+	DEFB $E6	;;(+00,+00,+00)
+	DEFB $5C	;;Exponent: $6C, Bytes: 2
+	DEFB $1F,$0B	;;(+00,+00)
+	DEFB $A3	;;Exponent: $73, Bytes: 3
+	DEFB $8F,$38,$EE	;;(+00)
+	DEFB $E9	;;Exponent: $79, Bytes: 4
+	DEFB $15,$63,$BB,$23	;;
+	DEFB $EE	;;Exponent: $7E, Bytes: 4
+	DEFB $92,$0D,$CD,$ED	;;
+	DEFB $F1	;;Exponent: $81, Bytes: 4
+	DEFB $23,$5D,$1B,$EA	;;
 
-        DEFB    cc_multiply     ;;multiply
-        DEFB    cc_end_calc     ;;end-calc
+	DEFB cc_multiply	;;multiply
+	DEFB cc_end_calc	;;end-calc
 
-        RET                     ; return.
+	RET	; return.
 
 ; ----------------------
 ; THE 'TANGENT' FUNCTION
@@ -3131,15 +3131,15 @@ c_ent:
 
 ;; tan
 tan:
-        RST     fp_calc         ;; FP-CALC          x.
-        DEFB    cc_duplicate    ;;duplicate         x, x.
-        DEFB    cc_sin          ;;sin               x, sin x.
-        DEFB    cc_exchange     ;;exchange          sin x, x.
-        DEFB    cc_cos          ;;cos               sin x, cos x.
-        DEFB    cc_division     ;;division          sin x/cos x (= tan x).
-        DEFB    cc_end_calc     ;;end-calc          tan x.
+	RST fp_calc	;; FP-CALC          x.
+	DEFB cc_duplicate	;;duplicate         x, x.
+	DEFB cc_sin	;;sin               x, sin x.
+	DEFB cc_exchange	;;exchange          sin x, x.
+	DEFB cc_cos	;;cos               sin x, cos x.
+	DEFB cc_division	;;division          sin x/cos x (= tan x).
+	DEFB cc_end_calc	;;end-calc          tan x.
 
-        RET                     ; return.
+	RET	; return.
 
 ; ---------------------
 ; THE 'ARCTAN' FUNCTION
@@ -3152,75 +3152,75 @@ tan:
 
 ;; atn
 atn:
-        CALL    conv_to_fp      ; convert integer form to floating point
-        LD      A,(HL)          ; fetch exponent
-        CP      $81             ; compare to that for 'one'
-        JR      C,small         ; forward, if less, to SMALL
+	CALL conv_to_fp	; convert integer form to floating point
+	LD A,(HL)	; fetch exponent
+	CP $81	; compare to that for 'one'
+	JR C,small	; forward, if less, to SMALL
 
-        RST     fp_calc         ;; FP-CALC      X.
-        DEFB    cc_stk_one      ;;stk-one
-        DEFB    cc_negate       ;;negate
-        DEFB    cc_exchange     ;;exchange
-        DEFB    cc_division     ;;division
-        DEFB    cc_duplicate    ;;duplicate
-        DEFB    cc_less_0       ;;less-0
-        DEFB    cc_stk_pi_div_2 ;;stk-pi/2
-        DEFB    cc_exchange     ;;exchange
-        DEFB    cc_jump_true    ;;jump-true
-        DEFB    cases - $       ;;to CASES
+	RST fp_calc	;; FP-CALC      X.
+	DEFB cc_stk_one	;;stk-one
+	DEFB cc_negate	;;negate
+	DEFB cc_exchange	;;exchange
+	DEFB cc_division	;;division
+	DEFB cc_duplicate	;;duplicate
+	DEFB cc_less_0	;;less-0
+	DEFB cc_stk_pi_div_2	;;stk-pi/2
+	DEFB cc_exchange	;;exchange
+	DEFB cc_jump_true	;;jump-true
+	DEFB cases - $	;;to CASES
 
-        DEFB    cc_negate       ;;negate
-        DEFB    cc_jump         ;;jump
-        DEFB    cases - $       ;;to CASES
+	DEFB cc_negate	;;negate
+	DEFB cc_jump	;;jump
+	DEFB cases - $	;;to CASES
 
 ; ---
 
 ;; SMALL
-small:  RST     fp_calc         ;; FP-CALC
-        DEFB    cc_stk_zero     ;;stk-zero
+small:	RST fp_calc	;; FP-CALC
+	DEFB cc_stk_zero	;;stk-zero
 
 ;; CASES
 cases:
-        DEFB    cc_exchange     ;;exchange
-        DEFB    cc_duplicate    ;;duplicate
-        DEFB    cc_duplicate    ;;duplicate
-        DEFB    cc_multiply     ;;multiply
-        DEFB    cc_duplicate    ;;duplicate
-        DEFB    cc_addition     ;;addition
-        DEFB    cc_stk_one      ;;stk-one
-        DEFB    cc_subtract     ;;subtract
+	DEFB cc_exchange	;;exchange
+	DEFB cc_duplicate	;;duplicate
+	DEFB cc_duplicate	;;duplicate
+	DEFB cc_multiply	;;multiply
+	DEFB cc_duplicate	;;duplicate
+	DEFB cc_addition	;;addition
+	DEFB cc_stk_one	;;stk-one
+	DEFB cc_subtract	;;subtract
 
-        DEFB    cc_series_0c    ;;series-0C
-        DEFB    $10             ;;Exponent: $60, Bytes: 1
-        DEFB    $B2             ;;(+00,+00,+00)
-        DEFB    $13             ;;Exponent: $63, Bytes: 1
-        DEFB    $0E             ;;(+00,+00,+00)
-        DEFB    $55             ;;Exponent: $65, Bytes: 2
-        DEFB    $E4,$8D         ;;(+00,+00)
-        DEFB    $58             ;;Exponent: $68, Bytes: 2
-        DEFB    $39,$BC         ;;(+00,+00)
-        DEFB    $5B             ;;Exponent: $6B, Bytes: 2
-        DEFB    $98,$FD         ;;(+00,+00)
-        DEFB    $9E             ;;Exponent: $6E, Bytes: 3
-        DEFB    $00,$36,$75     ;;(+00)
-        DEFB    $A0             ;;Exponent: $70, Bytes: 3
-        DEFB    $DB,$E8,$B4     ;;(+00)
-        DEFB    $63             ;;Exponent: $73, Bytes: 2
-        DEFB    $42,$C4         ;;(+00,+00)
-        DEFB    $E6             ;;Exponent: $76, Bytes: 4
-        DEFB    $B5,$09,$36,$BE ;;
-        DEFB    $E9             ;;Exponent: $79, Bytes: 4
-        DEFB    $36,$73,$1B,$5D ;;
-        DEFB    $EC             ;;Exponent: $7C, Bytes: 4
-        DEFB    $D8,$DE,$63,$BE ;;
-        DEFB    $F0             ;;Exponent: $80, Bytes: 4
-        DEFB    $61,$A1,$B3,$0C ;;
+	DEFB cc_series_0c	;;series-0C
+	DEFB $10	;;Exponent: $60, Bytes: 1
+	DEFB $B2	;;(+00,+00,+00)
+	DEFB $13	;;Exponent: $63, Bytes: 1
+	DEFB $0E	;;(+00,+00,+00)
+	DEFB $55	;;Exponent: $65, Bytes: 2
+	DEFB $E4,$8D	;;(+00,+00)
+	DEFB $58	;;Exponent: $68, Bytes: 2
+	DEFB $39,$BC	;;(+00,+00)
+	DEFB $5B	;;Exponent: $6B, Bytes: 2
+	DEFB $98,$FD	;;(+00,+00)
+	DEFB $9E	;;Exponent: $6E, Bytes: 3
+	DEFB $00,$36,$75	;;(+00)
+	DEFB $A0	;;Exponent: $70, Bytes: 3
+	DEFB $DB,$E8,$B4	;;(+00)
+	DEFB $63	;;Exponent: $73, Bytes: 2
+	DEFB $42,$C4	;;(+00,+00)
+	DEFB $E6	;;Exponent: $76, Bytes: 4
+	DEFB $B5,$09,$36,$BE	;;
+	DEFB $E9	;;Exponent: $79, Bytes: 4
+	DEFB $36,$73,$1B,$5D	;;
+	DEFB $EC	;;Exponent: $7C, Bytes: 4
+	DEFB $D8,$DE,$63,$BE	;;
+	DEFB $F0	;;Exponent: $80, Bytes: 4
+	DEFB $61,$A1,$B3,$0C	;;
 
-        DEFB    cc_multiply     ;;multiply
-        DEFB    cc_addition     ;;addition
-        DEFB    cc_end_calc     ;;end-calc
+	DEFB cc_multiply	;;multiply
+	DEFB cc_addition	;;addition
+	DEFB cc_end_calc	;;end-calc
 
-        RET                     ; return.
+	RET	; return.
 
 ; ---------------------
 ; THE 'ARCSIN' FUNCTION
@@ -3272,23 +3272,23 @@ cases:
 
 ;; asn
 asn:
-        RST     fp_calc         ;; FP-CALC      x.
-        DEFB    cc_duplicate    ;;duplicate     x, x.
-        DEFB    cc_duplicate    ;;duplicate     x, x, x.
-        DEFB    cc_multiply     ;;multiply      x, x*x.
-        DEFB    cc_stk_one      ;;stk-one       x, x*x, 1.
-        DEFB    cc_subtract     ;;subtract      x, x*x-1.
-        DEFB    cc_negate       ;;negate        x, 1-x*x.
-        DEFB    cc_sqr          ;;sqr           x, sqr(1-x*x) = y.
-        DEFB    cc_stk_one      ;;stk-one       x, y, 1.
-        DEFB    cc_addition     ;;addition      x, y+1.
-        DEFB    cc_division     ;;division      x/y+1.
-        DEFB    cc_atn          ;;atn           a/2     (half the angle)
-        DEFB    cc_duplicate    ;;duplicate     a/2, a/2.
-        DEFB    cc_addition     ;;addition      a.
-        DEFB    cc_end_calc     ;;end-calc      a.
+	RST fp_calc	;; FP-CALC      x.
+	DEFB cc_duplicate	;;duplicate     x, x.
+	DEFB cc_duplicate	;;duplicate     x, x, x.
+	DEFB cc_multiply	;;multiply      x, x*x.
+	DEFB cc_stk_one	;;stk-one       x, x*x, 1.
+	DEFB cc_subtract	;;subtract      x, x*x-1.
+	DEFB cc_negate	;;negate        x, 1-x*x.
+	DEFB cc_sqr	;;sqr           x, sqr(1-x*x) = y.
+	DEFB cc_stk_one	;;stk-one       x, y, 1.
+	DEFB cc_addition	;;addition      x, y+1.
+	DEFB cc_division	;;division      x/y+1.
+	DEFB cc_atn	;;atn           a/2     (half the angle)
+	DEFB cc_duplicate	;;duplicate     a/2, a/2.
+	DEFB cc_addition	;;addition      a.
+	DEFB cc_end_calc	;;end-calc      a.
 
-        RET                     ; return.
+	RET	; return.
 
 
 ; ------------------------
@@ -3320,14 +3320,14 @@ asn:
 
 ;; acs
 acs:
-        RST     fp_calc         ;; FP-CALC      x.
-        DEFB    cc_asn          ;;asn           asn(x).
-        DEFB    cc_stk_pi_div_2 ;;stk-pi/2      asn(x), pi/2.
-        DEFB    cc_subtract     ;;subtract      asn(x) - pi/2.
-        DEFB    cc_negate       ;;negate        pi/2 - asn(x) = acs(x).
-        DEFB    cc_end_calc     ;;end-calc      acs(x)
+	RST fp_calc	;; FP-CALC      x.
+	DEFB cc_asn	;;asn           asn(x).
+	DEFB cc_stk_pi_div_2	;;stk-pi/2      asn(x), pi/2.
+	DEFB cc_subtract	;;subtract      asn(x) - pi/2.
+	DEFB cc_negate	;;negate        pi/2 - asn(x) = acs(x).
+	DEFB cc_end_calc	;;end-calc      acs(x)
 
-        RET                     ; return.
+	RET	; return.
 
 ; --------------------------
 ; THE 'SQUARE ROOT' FUNCTION
@@ -3341,17 +3341,17 @@ acs:
 
 ;; sqr
 sqr:
-        RST     fp_calc         ;; FP-CALC              x.
-        DEFB    cc_duplicate    ;;duplicate             x, x.
-        DEFB    cc_fn_not       ;;not                   x, 1/0
-        DEFB    cc_jump_true    ;;jump-true             x, (1/0).
-        DEFB    last - $        ;;to L1DFD, LAST        exit if argument zero
-                                ;;                      with zero result.
+	RST fp_calc	;; FP-CALC              x.
+	DEFB cc_duplicate	;;duplicate             x, x.
+	DEFB cc_fn_not	;;not                   x, 1/0
+	DEFB cc_jump_true	;;jump-true             x, (1/0).
+	DEFB last - $	;;to L1DFD, LAST        exit if argument zero
+		;;                      with zero result.
 
 ;   else continue to calculate as x ** .5
 
-        DEFB    cc_stk_half     ;;stk-half              x, .5.
-        DEFB    cc_end_calc     ;;end-calc              x, .5.
+	DEFB cc_stk_half	;;stk-half              x, .5.
+	DEFB cc_end_calc	;;end-calc              x, .5.
 
 ; ------------------------------
 ; THE 'EXPONENTIATION' OPERATION
@@ -3365,20 +3365,20 @@ sqr:
 
 ;; to-power
 to_power:
-        RST     fp_calc         ;; FP-CALC              X,Y.
-        DEFB    cc_exchange     ;;exchange              Y,X.
-        DEFB    cc_duplicate    ;;duplicate             Y,X,X.
-        DEFB    cc_fn_not       ;;not                   Y,X,(1/0).
-        DEFB    cc_jump_true    ;;jump-true
-        DEFB    xiso - $        ;;forward to XISO if X is zero.
+	RST fp_calc	;; FP-CALC              X,Y.
+	DEFB cc_exchange	;;exchange              Y,X.
+	DEFB cc_duplicate	;;duplicate             Y,X,X.
+	DEFB cc_fn_not	;;not                   Y,X,(1/0).
+	DEFB cc_jump_true	;;jump-true
+	DEFB xiso - $	;;forward to XISO if X is zero.
 
 ;   else X is non-zero. function 'ln' will catch a negative value of X.
 
-        DEFB    cc_ln           ;;ln                    Y, LN X.
-        DEFB    cc_multiply     ;;multiply              Y * LN X
-        DEFB    cc_end_calc     ;;end-calc
+	DEFB cc_ln	;;ln                    Y, LN X.
+	DEFB cc_multiply	;;multiply              Y * LN X
+	DEFB cc_end_calc	;;end-calc
 
-        JP      exp             ; jump back to EXP routine.  ->
+	JP exp	; jump back to EXP routine.  ->
 
 ; ---
 
@@ -3387,38 +3387,38 @@ to_power:
 
 ;; XISO
 xiso:
-        DEFB    cc_delete       ;;delete                Y.
-        DEFB    cc_duplicate    ;;duplicate             Y, Y.
-        DEFB    cc_fn_not       ;;not                   Y, (1/0).
-        DEFB    cc_jump_true    ;;jump-true     
-        DEFB    one - $         ;;forward to L1DFB, ONE if Y is zero.
+	DEFB cc_delete	;;delete                Y.
+	DEFB cc_duplicate	;;duplicate             Y, Y.
+	DEFB cc_fn_not	;;not                   Y, (1/0).
+	DEFB cc_jump_true	;;jump-true
+	DEFB one - $	;;forward to L1DFB, ONE if Y is zero.
 
 ;   the power factor is not zero. If negative then an error exists.
 
-        DEFB    cc_stk_zero     ;;stk-zero              Y, 0.
-        DEFB    cc_exchange     ;;exchange              0, Y.
-        DEFB    cc_greater_0    ;;greater-0             0, (1/0).
-        DEFB    cc_jump_true    ;;jump-true             0
-        DEFB    last - $        ;;to LAST        if Y was any positive 
-                                ;;                      number.
+	DEFB cc_stk_zero	;;stk-zero              Y, 0.
+	DEFB cc_exchange	;;exchange              0, Y.
+	DEFB cc_greater_0	;;greater-0             0, (1/0).
+	DEFB cc_jump_true	;;jump-true             0
+	DEFB last - $	;;to LAST        if Y was any positive
+		;;                      number.
 
 ;   else force division by zero thereby raising an Arithmetic overflow error.
 ;   There are some one and two-byte alternatives but perhaps the most formal
 ;   might have been to use end-calc; rst 08; defb 05.
 
-        DEFB    cc_stk_one      ;;stk-one               0, 1.
-        DEFB    cc_exchange     ;;exchange              1, 0.
-        DEFB    cc_division     ;;division              1/0    >> error 
+	DEFB cc_stk_one	;;stk-one               0, 1.
+	DEFB cc_exchange	;;exchange              1, 0.
+	DEFB cc_division	;;division              1/0    >> error
 
 ; ---
 
 ;; ONE
 one:
-        DEFB    cc_delete       ;;delete                .
-        DEFB    cc_stk_one      ;;stk-one               1.
+	DEFB cc_delete	;;delete                .
+	DEFB cc_stk_one	;;stk-one               1.
 
 ;; LAST
 last:
-        DEFB    cc_end_calc     ;;end-calc              last value 1 or 0.
+	DEFB cc_end_calc	;;end-calc              last value 1 or 0.
 
-        RET                     ; return.
+	RET	; return.

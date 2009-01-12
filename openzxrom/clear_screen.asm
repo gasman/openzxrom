@@ -23,26 +23,26 @@
 ; Postal address: 14 Daisy Hill Drive, Adlington, Chorley,
 ;                 Lancs, PR6 9NE, United Kingdom
 
-			fillto 0x0d6b
-			jr clear_screen					; Another entry point to clear_screen;
-											; this one would normally perform additional
-											; housekeeping tasks which we don't bother
-											; with here yet
-			
+	fillto 0x0d6b
+	jr clear_screen	; Another entry point to clear_screen;
+		; this one would normally perform additional
+		; housekeeping tasks which we don't bother
+		; with here yet
+
 cmd_cls
-			call assert_eos			; assert that an end-of-statement follows the CLS token; die if not
-			jr clear_screen
-			
-			fillto 0x0daf
+	call assert_eos	; assert that an end-of-statement follows the CLS token; die if not
+	jr clear_screen
+
+	fillto 0x0daf
 clear_screen
-			ld hl,screen					; clear screen
-			ld (cursor_addr),hl				; set cursor to start of screen
-			ld de,screen + 1
-			ld bc,attributes - screen
-			ld (hl),l
-			ldir
-			ld a,(perm_attribute)			; get permanent attribute value
-			ld (hl),a						; and clear screen to those colours
-			ld bc,attributes_end - attributes - 1
-			ldir
-			ret
+	ld hl,screen	; clear screen
+	ld (cursor_addr),hl	; set cursor to start of screen
+	ld de,screen + 1
+	ld bc,attributes - screen
+	ld (hl),l
+	ldir
+	ld a,(perm_attribute)	; get permanent attribute value
+	ld (hl),a	; and clear screen to those colours
+	ld bc,attributes_end - attributes - 1
+	ldir
+	ret

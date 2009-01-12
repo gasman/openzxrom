@@ -30,7 +30,7 @@ beeper:
 	ld bc,118
 	add hl,bc
 
-	; hl = half period
+		; hl = half period
 
 	ld bc,-89
 	add hl,bc
@@ -70,9 +70,9 @@ beeper_loop
 	ei
 	ret
 
-delay	; wait bc T (including call; bc>=141)
-	; call with bc=0 in order to wait 65536 T
-	; destroys: af, bc, hl
+delay		; wait bc T (including call; bc>=141)
+		; call with bc=0 in order to wait 65536 T
+		; destroys: af, bc, hl
 
 	ld hl, -141
 	add hl, bc

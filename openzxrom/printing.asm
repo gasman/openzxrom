@@ -25,212 +25,212 @@
 
 putchar_main
 ; Output the character specified in A
-			exx								; preserve registers
-			ld l,a
-			ld a,(next_char_type)			; are we expecting a parameter to a control code?
-			or a
-			jp z,putchar_no_param			; if not, skip to putchar_no_param
-			cp 0x10							; is this an INK c colour?
-			jr z,putchar_ink
-			cp 0x11							; is this a PAPER c colour?
-			jr z,putchar_paper
-			cp 0x12							; is this a FLASH c setting?
-			jr z,putchar_flash
-			cp 0x13							; is this a BRIGHT c setting?
-			jr z,putchar_bright
-			cp 0x16							; is this an AT y coordinate?
-			jr z,putchar_at
-			cp 0x17							; is this a TAB x coordinate?
-			jr z,putchar_tab
-			; TODO: handle other control codes
-			jp error_unprintable	; other control codes not supported yet
+	exx	; preserve registers
+	ld l,a
+	ld a,(next_char_type)	; are we expecting a parameter to a control code?
+	or a
+	jp z,putchar_no_param	; if not, skip to putchar_no_param
+	cp 0x10	; is this an INK c colour?
+	jr z,putchar_ink
+	cp 0x11	; is this a PAPER c colour?
+	jr z,putchar_paper
+	cp 0x12	; is this a FLASH c setting?
+	jr z,putchar_flash
+	cp 0x13	; is this a BRIGHT c setting?
+	jr z,putchar_bright
+	cp 0x16	; is this an AT y coordinate?
+	jr z,putchar_at
+	cp 0x17	; is this a TAB x coordinate?
+	jr z,putchar_tab
+		; TODO: handle other control codes
+	jp error_unprintable	; other control codes not supported yet
 
 putchar_ink
-			; set temporary ink colour as specified in l
-			ld a,l							; put colour argument back into A
-			ld ix,temp_attribute	; point set_ink routine at temporary attributes
-			call set_ink_safe			; call set_ink, bypassing negative number test
-			jr putchar_colour_done
+		; set temporary ink colour as specified in l
+	ld a,l	; put colour argument back into A
+	ld ix,temp_attribute	; point set_ink routine at temporary attributes
+	call set_ink_safe	; call set_ink, bypassing negative number test
+	jr putchar_colour_done
 
 putchar_paper
-			; set temporary paper colour as specified in l
-			ld a,l							; put colour argument back into A
-			ld ix,temp_attribute	; point set_paper routine at temporary attributes
-			call set_paper_safe			; call set_paper, bypassing negative number test
-			jr putchar_colour_done
-			
+		; set temporary paper colour as specified in l
+	ld a,l	; put colour argument back into A
+	ld ix,temp_attribute	; point set_paper routine at temporary attributes
+	call set_paper_safe	; call set_paper, bypassing negative number test
+	jr putchar_colour_done
+
 putchar_flash
-			; set temporary FLASH attribute as specified in l
-			ld a,l							; put argument back into A
-			ld ix,temp_attribute	; point set_flash routine at temporary attributes
-			call set_flash_safe			; call set_flash, bypassing negative number test
-			jr putchar_colour_done
-			
+		; set temporary FLASH attribute as specified in l
+	ld a,l	; put argument back into A
+	ld ix,temp_attribute	; point set_flash routine at temporary attributes
+	call set_flash_safe	; call set_flash, bypassing negative number test
+	jr putchar_colour_done
+
 putchar_bright
-			; set temporary BRIGHT attribute as specified in l
-			ld a,l							; put argument back into A
-			ld ix,temp_attribute	; point set_bright routine at temporary attributes
-			call set_bright_safe			; call set_bright, bypassing negative number test
+		; set temporary BRIGHT attribute as specified in l
+	ld a,l	; put argument back into A
+	ld ix,temp_attribute	; point set_bright routine at temporary attributes
+	call set_bright_safe	; call set_bright, bypassing negative number test
 putchar_colour_done
-			xor a							; expect ordinary char in next call
-			ld (next_char_type),a			; to putchar
-			exx
-			ret
+	xor a	; expect ordinary char in next call
+	ld (next_char_type),a	; to putchar
+	exx
+	ret
 
 putchar_at
-			; move cursor to specified y line (given in l)
-			; TODO: check for overflow
-			ld h,0x02						; shifted left five times to give 0x40,
-											; start of screen memory
-			sla l
-			sla l
-			sla l
-			add hl,hl
-			add hl,hl						; top two bits of y position go into high byte
-			sla h
-			sla h
-			sla h
-			ld (cursor_addr),hl
-			ld a,0x17						; next value passed to putchar will provide
-			ld (next_char_type),a			; x coordinate
-			exx
-			ret
+		; move cursor to specified y line (given in l)
+		; TODO: check for overflow
+	ld h,0x02	; shifted left five times to give 0x40,
+		; start of screen memory
+	sla l
+	sla l
+	sla l
+	add hl,hl
+	add hl,hl	; top two bits of y position go into high byte
+	sla h
+	sla h
+	sla h
+	ld (cursor_addr),hl
+	ld a,0x17	; next value passed to putchar will provide
+	ld (next_char_type),a	; x coordinate
+	exx
+	ret
 
 putchar_tab
-			; move cursor to specified x column (given in l)
-			; TODO: check for overflow
-			ld e,l
-			ld hl,(cursor_addr)
-			ld a,l							; get low byte of cursor address
-			and 0x1f						; extract current x coordinate
-			cp e							; are we already past the destination column?
-			jr c,putchar_tab_no_wrap		; if not, don't advance to next line
-			jr z,putchar_tab_no_wrap		; likewise if we're at the right position already
-			rrc h
-			rrc h
-			rrc h
-			ld bc,0x0020
-			add hl,bc
-			rlc h
-			rlc h
-			rlc h
+		; move cursor to specified x column (given in l)
+		; TODO: check for overflow
+	ld e,l
+	ld hl,(cursor_addr)
+	ld a,l	; get low byte of cursor address
+	and 0x1f	; extract current x coordinate
+	cp e	; are we already past the destination column?
+	jr c,putchar_tab_no_wrap	; if not, don't advance to next line
+	jr z,putchar_tab_no_wrap	; likewise if we're at the right position already
+	rrc h
+	rrc h
+	rrc h
+	ld bc,0x0020
+	add hl,bc
+	rlc h
+	rlc h
+	rlc h
 putchar_tab_no_wrap
-			ld a,l
-			and 0xe0						; strip out existing x coordinate
-			or e							; merge in new x coordinate
-			ld l,a
-			ld (cursor_addr),hl
-			xor a
-			ld (next_char_type),a			; next value passed to putchar is
-											; an ordinary character
-			exx
-			ret
+	ld a,l
+	and 0xe0	; strip out existing x coordinate
+	or e	; merge in new x coordinate
+	ld l,a
+	ld (cursor_addr),hl
+	xor a
+	ld (next_char_type),a	; next value passed to putchar is
+		; an ordinary character
+	exx
+	ret
 
 putchar_no_param
-			ld a,l
-			cp 0xa5							; test whether character is a keyword token (ASCII >= 0xa5)
-			jp nc,putchar_keyword
-			cp 0x90							; test whether character is a UDG (ASCII >= 0x90)
-			jr nc,putchar_udg
-			cp 0x80							; test whether character is a block graphic (ASCII >= 0x80)
-			jp nc,putchar_block_graphic
-			cp 0x20							; test whether character is plaintext (ASCII >= 0x20)
-			jr nc,putchar_plain
-			cp 0x06							; is character a comma control?
-			jr z,putchar_comma
-			cp 0x0d							; is character a newline?
-			jr z,putchar_newline
-			ld (next_char_type),a			; if not, store control code in
-											; next_char_type awaiting parameters
-			exx
-			ret
-			
+	ld a,l
+	cp 0xa5	; test whether character is a keyword token (ASCII >= 0xa5)
+	jp nc,putchar_keyword
+	cp 0x90	; test whether character is a UDG (ASCII >= 0x90)
+	jr nc,putchar_udg
+	cp 0x80	; test whether character is a block graphic (ASCII >= 0x80)
+	jp nc,putchar_block_graphic
+	cp 0x20	; test whether character is plaintext (ASCII >= 0x20)
+	jr nc,putchar_plain
+	cp 0x06	; is character a comma control?
+	jr z,putchar_comma
+	cp 0x0d	; is character a newline?
+	jr z,putchar_newline
+	ld (next_char_type),a	; if not, store control code in
+		; next_char_type awaiting parameters
+	exx
+	ret
+
 putchar_comma
-			; comma control: output whitespace until cursor address mod 16 is 0
-			ld a,' '
-			rst putchar						; output a space
-			ld a,(cursor_addr)		; test cursor_addr
-			and 0x0f							; loop unless cursor_addr & 0x0f is zero
-			jr nz,putchar_comma
-			exx
-			ret
-			
+		; comma control: output whitespace until cursor address mod 16 is 0
+	ld a,' '
+	rst putchar	; output a space
+	ld a,(cursor_addr)	; test cursor_addr
+	and 0x0f	; loop unless cursor_addr & 0x0f is zero
+	jr nz,putchar_comma
+	exx
+	ret
+
 putchar_newline
-			exx								; restore registers (must only use A from here on)
-			ld a,(cursor_addr)				; get low byte of cursor
-			and 0xe0						; set x coord to 0
-			add a,0x20						; increment y coord
-			ld (cursor_addr),a
-			ret nc							; we're done, unless we moved to next screen third
-			ld a,(cursor_addr + 1)
-			add a,0x08
-			; TODO: handle bottom-of-screen overflow
-			ld (cursor_addr + 1),a
-			ret
-			
+	exx	; restore registers (must only use A from here on)
+	ld a,(cursor_addr)	; get low byte of cursor
+	and 0xe0	; set x coord to 0
+	add a,0x20	; increment y coord
+	ld (cursor_addr),a
+	ret nc	; we're done, unless we moved to next screen third
+	ld a,(cursor_addr + 1)
+	add a,0x08
+		; TODO: handle bottom-of-screen overflow
+	ld (cursor_addr + 1),a
+	ret
+
 putchar_udg
-			sub 0x90						; convert char to address within UDG table
-			ld l,a
-			ld h,0
-			add hl,hl
-			add hl,hl
-			add hl,hl
-			ld de,(udg_ptr)
-			add hl,de
-			jr copy_char_bitmap
-			
+	sub 0x90	; convert char to address within UDG table
+	ld l,a
+	ld h,0
+	add hl,hl
+	add hl,hl
+	add hl,hl
+	ld de,(udg_ptr)
+	add hl,de
+	jr copy_char_bitmap
+
 putchar_plain
-			ld h,0							; convert char to address within font
-			add hl,hl
-			add hl,hl
-			add hl,hl
-			ld de,(font_ptr)
-			add hl,de
+	ld h,0	; convert char to address within font
+	add hl,hl
+	add hl,hl
+	add hl,hl
+	ld de,(font_ptr)
+	add hl,de
 ; copy bitmap address pointed to by HL to current cursor position
 copy_char_bitmap
-			ld de,(cursor_addr)
-			push de
-			ld b,8
+	ld de,(cursor_addr)
+	push de
+	ld b,8
 copy_char_bitmap_lp
-			ld a,(hl)
-			ld (de),a
-			inc d
-			inc l
-			djnz copy_char_bitmap_lp
-			pop hl
-			push hl
-			; write attribute cell
-			ld a,h							; translate cursor to attribute position
-			rrca
-			rrca
-			rrca
-			or 0x50
-			ld h,a
+	ld a,(hl)
+	ld (de),a
+	inc d
+	inc l
+	djnz copy_char_bitmap_lp
+	pop hl
+	push hl
+		; write attribute cell
+	ld a,h	; translate cursor to attribute position
+	rrca
+	rrca
+	rrca
+	or 0x50
+	ld h,a
 
-			push ix
-			ld ix,temp_attribute
-			ld a,(hl)						; read current attribute
-			and (ix+1)					; apply temporary attribute mask to preserve transparent attributes
-			or (ix)							; merge with current temporary attribute value
-			ld (hl),a						; write back to screen
-			pop ix
+	push ix
+	ld ix,temp_attribute
+	ld a,(hl)	; read current attribute
+	and (ix+1)	; apply temporary attribute mask to preserve transparent attributes
+	or (ix)	; merge with current temporary attribute value
+	ld (hl),a	; write back to screen
+	pop ix
 
-			pop hl
-			; advance cursor
-			rr h
-			rr h
-			rr h
-			inc hl
-			rl h
-			rl h
-			rl h
-			; TODO: scroll screen and move cursor to start of line 23
-			; when we reach the bottom of the screen (H = 0x58)
-			ld (cursor_addr),hl
-			exx
-			ret
+	pop hl
+		; advance cursor
+	rr h
+	rr h
+	rr h
+	inc hl
+	rl h
+	rl h
+	rl h
+		; TODO: scroll screen and move cursor to start of line 23
+		; when we reach the bottom of the screen (H = 0x58)
+	ld (cursor_addr),hl
+	exx
+	ret
 
 putchar_keyword
-			jp error_unprintable		; TODO: implement keyword printing
+	jp error_unprintable	; TODO: implement keyword printing
 putchar_block_graphic
-			jp error_unprintable		; TODO: implement block graphic printing
+	jp error_unprintable	; TODO: implement block graphic printing
