@@ -23,8 +23,21 @@
 # Postal address: 14 Daisy Hill Drive, Adlington, Chorley,
 #                 Lancs, PR6 9NE, United Kingdom
 
+# path to the Fuse executable
+FUSE=fuse
+
+# if you want to override the above, do it in a file config.mk...
+-include config.mk
+
+.PHONY: fuse clean
+
 openzxrom.bin: rom.asm restarts.asm startup.asm printing.asm keyboard.asm interpreter.asm cassette.asm clear_screen.asm errors.asm memory.asm expressions.asm functions.asm commands.asm print_string.asm graphics.asm calculator.asm diagnostics.asm splash_screen.asm clairsys.bin
 	pasmo rom.asm openzxrom.bin openzxrom.sym
 
+# build the ROM and run it in Fuse
+fuse: openzxrom.bin
+	$(FUSE) --rom-48 openzxrom.bin --machine 48 --no-traps
+
 clean:
 	rm -f openzxrom.bin openzxrom.sym
+
