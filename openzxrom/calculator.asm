@@ -1,6 +1,6 @@
 ; calculator.asm: Floating-point calculator routines (from the ZX81 ROM)
-; From the OpenZXRom project
-; Copyright (c) 1981 Nine Tiles Networks Ltd
+; From the Open82 project
+; Copyright (c) 2009 Nine Tiles Networks Ltd, Matthew Westcott
 ;
 ; $Id$
 ;
@@ -19,9 +19,9 @@
 ;
 ; Author contact information:
 ;
-; E-mail: webenq [at] ninetiles.com
-; Postal address: The Hall, 9 Station Road, Waterbeach,
-;                 Cambridge, CB25 9HT, England
+; E-mail: matthew@west.co.tt
+; Postal address: 14 Daisy Hill Drive, Adlington, Chorley,
+;                 Lancs, PR6 9NE, United Kingdom
 
 	fillto 0x2ab6
 ;; STK-STO-$
@@ -111,7 +111,7 @@ stack_a:
 ; -------------------------
 ; THE 'STACK-BC' SUBROUTINE
 ; -------------------------
-; - rewritten for OpenZXRom
+; - rewritten for Open82
 ; Here we take advantage of the Spectrum's special-case notation for integers
 ; under 65536 and simply push BC in integer form.
 
@@ -157,7 +157,7 @@ conv_two_to_fp:
 ; ---------------------------------------
 ; THE 'CONVERT TO FLOATING POINT' ROUTINE
 ; ---------------------------------------
-; - new for OpenZXRom (not required on ZX81)
+; - new for Open82 (not required on ZX81)
 ; Examines the five-byte value at address HL, and if it is in integer form,
 ; converts it to floating point.
 
@@ -1357,7 +1357,7 @@ stk_ten:
 ; starts with binary operations which have two operands and one result.
 ; three pseudo binary operations first.
 
-; (MW - OpenZXRom:) Remapped to Spectrum opcodes where appropriate.
+; (MW - Open82:) Remapped to Spectrum opcodes where appropriate.
 ; Where opcodes are unimplemented, jump to error_calc_op instead
 
 ;; tbl-addrs
@@ -2117,7 +2117,7 @@ abs_int_done:
 ; This routine replaces the last value on the calculator stack,
 ; which is in floating point form, with one if positive and with -minus one
 ; if negative. If it is zero then it is left as such.
-; MW: Reimplemented in OpenZXRom because ZX81 routine is inherently
+; MW: Reimplemented in Open82 because ZX81 routine is inherently
 ; floating-point-form based
 
 ;; sgn
@@ -2192,7 +2192,7 @@ usr_no:
 ; -------------
 ; Test for zero
 ; -------------
-; (new to OpenZXRom)
+; (new to Open82)
 ; Returns with A=0 and zero flag set if the five-byte value at HL is zero.
 ; On the ZX81, only the exponent byte needed to be examined, but here an
 ; exponent of zero just means it's in integer form, so we need to look at

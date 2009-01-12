@@ -1,6 +1,6 @@
 ; cassette.asm: Cassette handling routines
-; From the OpenZXRom project
-; Copyright (c) 2005-2008 Matthew Westcott
+; From the Open82 project
+; Copyright (c) 2008 Matthew Westcott
 ;
 ; $Id$
 ;

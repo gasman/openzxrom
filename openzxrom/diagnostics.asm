@@ -1,6 +1,6 @@
 ; diagnostics.asm: Error diagnostics
-; From the OpenZXRom project
-; Copyright (c) 2007 Matthew Westcott
+; From the Open82 project
+; Copyright (c) 2009 Matthew Westcott
 ;
 ; $Id$
 ;

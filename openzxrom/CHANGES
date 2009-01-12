@@ -1,4 +1,5 @@
-OpenZXRom xxxx-xx-xx
+Open82 xxxx-xx-xx
+- Project renamed to Open82
 - Calculator routines from the ZX81 ROM are incorporated. All pure numeric
   calculator operations and functions are now supported
 - Low-level beeper routine ('beeper')

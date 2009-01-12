@@ -1,5 +1,6 @@
-                                   OpenZXrom
-                                   =========
+Open82 - A freely licenced replacement firmware for the ZX Spectrum
+http://sourceforge.net/projects/open82/
+===================================================================
 
         "No disrespect to Mr. Altwasser but it is the ROM, not the
         hardware, that make the Spectrum great. It's an incomplete work
@@ -7,7 +8,7 @@
                 - Geoff Wearmouth, comp.sys.sinclair
                 <8te+ZzDmVI1DFw7K@wearmouth.demon.co.uk>
 
-OpenZXrom is a ROM image for the Sinclair ZX Spectrum computer, created with the
+Open82 is a ROM image for the Sinclair ZX Spectrum computer, created with the
 aim of being as compatible as possible with Sinclair's original 16/48K ROM while
 containing none of the original copyrighted code. It is released under the GNU
 General Public License.
@@ -34,23 +35,15 @@ substitute for the original Sinclair ROM.
 
 * How compatible can we get?
 
-Certainly not 100%... having a complete Basic programming environment is a long
-way off. (True 100% compatibility will never be attainable anyway; the
-pathological case would be a program which performs a byte checksum of the ROM.)
-The current development centres around two goals:
-1) Implementing the most common entry points used by machine-code programs;
-   these include text printing, keyboard scanning and floating point maths.
-2) Implementing enough of a Basic interpreter to run a typical bootstrap loader,
-   to allow machine code programs to be loaded from tape.
-
-For 1), we might expect something like a 90:10 rule, particularly for games: 90%
-of games will work with only 10% of the ROM's feature set implemented. Often (as
-in the case of Manic Miner) simply providing a font is enough. 2) is rather more
-taxing, as even a short Basic stub may turn out to use all sorts of language
-features. Nevertheless, the most common commands (CLEAR, LOAD, USR) are now
-supported, and this is enough to get a small but growing number of titles
-working correctly. See the STATUS document for the current list of supported
-features.
+Certainly not 100%... the pathological case would be a program which performs a
+cryptographic hash function over the ROM and deliberately fails if it doesn't
+match. Nevertheless, by implementing a full (or nearly-full) interpreter for
+Sinclair Basic and ensuring that we match the most common entry points called by
+machine-code software - such as text printing, keyboard scanning and floating
+point maths - we can hope to be compatible with the majority of software -
+eventually. See the STATUS document for the current list of supported features;
+additionally, a list of compatible games is maintained at:
+http://scratchpad.wikia.com/wiki/OpenZXRom
 
 Of course, the real Sinclair ROMs will continue to be readily downloadable under
 Amstrad's not-free-but-usually-good-enough licence for the forseeable future, so
@@ -67,10 +60,15 @@ though, only consulting the actual ROM code when absolutely necessary, and
 certainly not in order to figure out the best way of doing things. I'd advise
 any other contributors to take the same approach.
 
-In practice, the differing design goals and priorities between this ROM and
-Sinclair's will tend towards producing different code; for example, in our
-version of the print routines, we have no need to implement such details as
-stream redirection (at least, not yet).
+* Build instructions
+
+The Pasmo assembler is required: http://www.arrakis.es/~ninsesabe/pasmo/
+To build, simply run:
+
+  make
+
+The build process has been tested with Pasmo 0.5.3 and GNU Make 3.81.
+See Makefile for additional configuration options.
 
 * How do I use it?
 
@@ -78,24 +76,17 @@ This will vary from one emulator to another. In Fuse, you can go to Options ->
 Select ROMs -> Spectrum 48K and select the file, or start it with the command
 line:
 
-fuse --rom-48 openzxrom.bin --machine 48
+fuse --rom-48 open82.bin --machine 48
+
+Running 'make fuse' from the Open82 build directory will have the same effect,
+provided the path to the Fuse executable is correctly specified in Makefile
+or config.mk.
 
 On a 128K machine, you'll get best results from placing the same ROM image in
 both slots, so that it's always available regardless of the current paging:
 
-fuse --rom-128-0 openzxrom.bin --rom-128-1 openzxrom.bin --machine 128
+fuse --rom-128-0 open82.bin --rom-128-1 open82.bin --machine 128
 
-However, this is probably a case of "if you're the sort of person to be
-interested in this project in the first place, you probably know how to do it
-already". Once this project properly gets off the ground and is supplied as the
-default ROM image for an emulator package, you're more likely to be asking how
-to switch away from it instead :-)
-
-* Build instructions
-
-'make'.
-You'll need Pasmo <http://www.arrakis.es/~ninsesabe/pasmo/> to assemble it -
-tested with version 0.5.3, but earlier versions may work.
 
 * Error messages
 
@@ -126,5 +117,12 @@ the ROM rather than errors in the running program:
   instruction code (indicated by the hex code) which is not yet implemented.
 
 
-Matthew Westcott <matthew@west.co.tt>
-http://matt.west.co.tt/spectrum/openzxrom/
+* History
+
+The present codebase was originally developed as the OpenZXRom project, led by
+Matthew Westcott and taking games software compatibility as its original goal.
+This was merged with the Open82 project led by Andrew Owen (which focused on a
+working BASIC interpreter as a priority, and secured permission for ROM code
+from the ZX80, ZX81, Jupiter Ace and SAM Coupe to be incorporated under the
+terms of the GPL), and adopted the latter name in response to possible trademark
+issues over the 'ZX' name. See AUTHORS for a full list of contributors.

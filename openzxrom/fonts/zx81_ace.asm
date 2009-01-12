@@ -1,5 +1,5 @@
 ; zx81_ace.asm: Font derived from ZX81 and Jupiter Ace system fonts
-; From the OpenZXRom project
+; From the Open82 project
 ; Copyright (c) 1981 Nine Tiles Networks Ltd
 ;
 ; $Id$

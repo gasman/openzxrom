@@ -1,6 +1,6 @@
 ; rom.asm: A freely-licenced replacement firmware for the ZX Spectrum
-; From the OpenZXRom project
-; Copyright (c) 2005-2008 Matthew Westcott
+; From the Open82 project
+; Copyright (c) 2009 Matthew Westcott
 ;
 ; $Id$
 ;
@@ -100,7 +100,7 @@ screen	equ 0x4000
 attributes	equ 0x5800
 attributes_end	equ 0x5b00
 
-; System variables specific to OpenZXRom:
+; System variables specific to Open82:
 cursor_addr	equ 0x5b00	; Screen address at which next character will be displayed
 next_char_type	equ 0x5b02	; how to interpret next character received by RST 0x0010:
 		; 00 = ordinary character

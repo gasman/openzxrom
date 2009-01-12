@@ -1,6 +1,6 @@
 ; restarts.asm: Routines to be called by the Z80's restart and interrupt features
-; From the OpenZXRom project
-; Copyright (c) 2005-2008 Matthew Westcott
+; From the Open82 project
+; Copyright (c) 2009 Matthew Westcott, Nine Tiles Networks Ltd
 ;
 ; $Id$
 ;

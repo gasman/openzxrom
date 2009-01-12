@@ -1,5 +1,5 @@
 ; speaker.asm: tone generation routines for the built-in speaker
-; From the OpenZXRom project
+; From the Open82 project
 ; Copyright (c) 2008 Jan Bobrowski
 ;
 ; $Id$

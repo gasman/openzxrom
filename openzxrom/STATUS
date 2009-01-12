@@ -1,4 +1,4 @@
-Project status: OpenZXRom 2008-01-07
+Project status: Open82 v2009-xx-xx
 
 User entry points
 -----------------
@@ -121,4 +121,4 @@ the current paper colour, and then behaving identically to INK 0 / INK 7
 respectively. However, the original ROM appears to set a flag to permanently
 record the 'contrasting INK' mode: thus PAPER 2: INK 9: PAPER 6 will result in
 black ink on yellow paper on the original ROM, but white ink on yellow on
-OpenZXRom.
+Open82.

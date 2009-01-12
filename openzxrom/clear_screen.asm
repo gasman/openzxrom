@@ -1,6 +1,6 @@
 ; clear_screen.asm: clear the screen
-; From the OpenZXRom project
-; Copyright (c) 2005-2007 Matthew Westcott
+; From the Open82 project
+; Copyright (c) 2007 Matthew Westcott
 ;
 ; $Id$
 ;
