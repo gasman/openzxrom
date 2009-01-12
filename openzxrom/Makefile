@@ -26,13 +26,22 @@
 # path to the Fuse executable
 FUSE=fuse
 
+# font to be used
+FONT=ZX81ACE
+
 # if you want to override the above, do it in a file config.mk...
 -include config.mk
 
 .PHONY: fuse clean
 
-openzxrom.bin: rom.asm restarts.asm startup.asm printing.asm keyboard.asm interpreter.asm cassette.asm clear_screen.asm errors.asm memory.asm expressions.asm functions.asm commands.asm print_string.asm graphics.asm calculator.asm diagnostics.asm splash_screen.asm clairsys.bin
-	pasmo rom.asm openzxrom.bin openzxrom.sym
+ifeq ($(FONT),CLAIRSYS)
+  FONT_FILE=fonts/clairsys.bin
+else
+  FONT_FILE=fonts/zx81_ace.asm
+endif
+
+openzxrom.bin: rom.asm restarts.asm startup.asm printing.asm keyboard.asm interpreter.asm cassette.asm clear_screen.asm errors.asm memory.asm expressions.asm functions.asm commands.asm print_string.asm graphics.asm calculator.asm diagnostics.asm splash_screen.asm $(FONT_FILE)
+	pasmo --equ FONT_$(FONT) rom.asm openzxrom.bin openzxrom.sym
 
 # build the ROM and run it in Fuse
 fuse: openzxrom.bin

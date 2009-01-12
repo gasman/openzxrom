@@ -90,7 +90,11 @@ splash_text_end
 ; ---------------			
 	fillto 0x3d00
 font
-	incbin "clairsys.bin"
+	if defined FONT_CLAIRSYS
+	incbin "fonts/clairsys.bin"
+	else
+	include "fonts/zx81_ace.asm"
+	endif
 
 screen	equ 0x4000
 attributes	equ 0x5800
